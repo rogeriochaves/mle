@@ -1,6 +1,5 @@
 module Main exposing (..)
 
-import DualNumber exposing (derivative)
 import Html exposing (..)
 import Regression exposing (..)
 
@@ -15,6 +14,6 @@ data =
 
 main : Html msg
 main =
-    derivative (squaredError data) 1
+    descend data -5
         |> toString
         |> text
