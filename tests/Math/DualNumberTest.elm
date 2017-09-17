@@ -1,8 +1,8 @@
-module DualNumberTest exposing (..)
+module Math.DualNumberTest exposing (..)
 
-import DualNumber exposing (..)
 import ElmTestBDDStyle exposing (..)
 import Expect exposing (..)
+import Math.DualNumber exposing (..)
 import Test exposing (..)
 
 

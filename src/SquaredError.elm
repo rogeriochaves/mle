@@ -1,6 +1,6 @@
 module SquaredError exposing (..)
 
-import DualNumber exposing (..)
+import Math.DualNumber exposing (..)
 
 
 hypotesis : DualNumber -> DualNumber -> DualNumber
@@ -29,7 +29,7 @@ squaredError data parameter1 =
 
 (+) : DualNumber -> DualNumber -> DualNumber
 (+) =
-    DualNumber.sum
+    sum
 
 
 (-) : DualNumber -> DualNumber -> DualNumber

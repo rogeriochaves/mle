@@ -1,4 +1,4 @@
-module DualNumber exposing (..)
+module Math.DualNumber exposing (..)
 
 -- source: https://codon.com/automatic-differentiation-in-ruby
 

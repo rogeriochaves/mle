@@ -1,8 +1,8 @@
 module SquaredErrorTest exposing (..)
 
-import DualNumber exposing (toDual)
 import ElmTestBDDStyle exposing (..)
 import Expect exposing (..)
+import Math.DualNumber exposing (toDual)
 import SquaredError exposing (..)
 import Test exposing (..)
 

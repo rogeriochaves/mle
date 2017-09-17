@@ -1,6 +1,6 @@
 module Regression exposing (..)
 
-import DualNumber exposing (..)
+import Math.DualNumber exposing (..)
 import SquaredError exposing (squaredError)
 
 
