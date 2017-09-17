@@ -14,6 +14,6 @@ data =
 
 main : Html msg
 main =
-    gradientDescend data 0
+    linearRegression data
         |> toString
         |> text

@@ -23,4 +23,6 @@ suite =
             expect (gradientDescend data 10 |> round) to equal 1
         , it "keeps same when already converged" <|
             expect (gradientDescend data 1) to equal 1
+        , it "applies linear regression to data" <|
+            expect (linearRegression data |> round) to equal 1
         ]

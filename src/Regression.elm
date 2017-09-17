@@ -29,3 +29,8 @@ gradientDescend data parameter1 =
         nextParameter1
     else
         gradientDescend data nextParameter1
+
+
+linearRegression : List ( Float, Float ) -> Float
+linearRegression data =
+    gradientDescend data 0
