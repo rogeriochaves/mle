@@ -14,6 +14,6 @@ data =
 
 main : Html msg
 main =
-    descend data -5
+    gradientDescend data 0
         |> toString
         |> text
