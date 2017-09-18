@@ -1,14 +1,15 @@
 module Math.Matrix exposing (..)
 
 import Array
+import Array.Extra
 import Matrix exposing (..)
 
 
 transpose : Matrix number -> Matrix number
 transpose matrix =
     indexedFoldl
-        (\i j current inverse ->
-            Matrix.set j i current inverse
+        (\x y elem inverse ->
+            Matrix.set y x elem inverse
         )
         (Matrix.repeat (Matrix.height matrix) (Matrix.width matrix) 0)
         matrix
@@ -37,3 +38,25 @@ indexedFoldl fn initial matrix =
     in
     Array.foldl fn_ { index = 0, acc = initial } matrix.data
         |> .acc
+
+
+multiply : Matrix number -> Matrix number -> Maybe (Matrix number)
+multiply a b =
+    let
+        initial =
+            Matrix.repeat (Matrix.width b) (Matrix.height a) 0
+
+        mult x y _ result =
+            case ( result, Matrix.getRow y a, Matrix.getColumn x b ) of
+                ( Just matrix, Just row, Just column ) ->
+                    let
+                        value =
+                            Array.Extra.map2 (\x y -> x * y) row column
+                                |> Array.foldl (+) 0
+                    in
+                    Just (Matrix.set x y value matrix)
+
+                _ ->
+                    Nothing
+    in
+    indexedFoldl mult (Just initial) initial
