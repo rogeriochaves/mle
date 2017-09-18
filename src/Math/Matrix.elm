@@ -1,6 +1,6 @@
 module Math.Matrix exposing (..)
 
-import Array
+import Array exposing (Array)
 import Array.Extra
 import Matrix exposing (..)
 
@@ -60,3 +60,25 @@ multiply a b =
                     Nothing
     in
     indexedFoldl mult (Just initial) initial
+
+
+addColumn : Array number -> Matrix number -> Maybe (Matrix number)
+addColumn column matrix =
+    let
+        initial =
+            Matrix.repeat (Matrix.width matrix + 1) (Matrix.height matrix) 0
+
+        addCol x y _ result =
+            case result of
+                Just newMatrix ->
+                    if x == 0 then
+                        Array.get y column
+                            |> Maybe.map (\newElem -> Matrix.set x y newElem newMatrix)
+                    else
+                        Matrix.get (x - 1) y matrix
+                            |> Maybe.map (\elem -> Matrix.set x y elem newMatrix)
+
+                Nothing ->
+                    Nothing
+    in
+    indexedFoldl addCol (Just initial) initial
