@@ -34,18 +34,26 @@ suite =
     describe "LinearRegression"
         [ it "calculates the hypotesis for all parameters" <|
             expect (hypotesis xs [ 5 ]) to equal (Ok [ 5, 10, 15 ])
-        , it "descends a param down for overshooted solution" <|
-            expect (paramDescend (padFeatures xs) ys [ 0, 8 ] 1 8) to equal (Ok ( 26, 5.4 ))
-        , it "descends a param up for undershooted solution" <|
-            expect (paramDescend (padFeatures xs) ys [ 0, -4 ] 1 -4) to equal (Ok ( -30, -1 ))
-        , it "keeps params if correct solution" <|
-            expect (paramDescend (padFeatures xs) ys [ 1, 2 ] 1 2) to equal (Ok ( 0, 2 ))
-        , it "descends when guess is wrong" <|
-            expect (descend xs ys [ 0.5, 2 ]) to equal (Ok ( -1.5, [ 0.55, 2.1 ] ))
-        , it "converges with gradient descend" <|
-            expect (gradientDescend xs ys (initialParameters xs) |> Result.map (List.map round)) to equal (Ok [ 1, 2 ])
-        , it "keeps same when already converged" <|
-            expect (gradientDescend xs ys [ 1, 2 ]) to equal (Ok [ 1, 2 ])
-        , it "applies linear regression to data" <|
-            expect (linearRegression xs ys |> Result.map (List.map round)) to equal (Ok [ 1, 2 ])
+        , describe "param descend"
+            [ it "descends a param down for overshooted solution" <|
+                expect (paramDescend (padFeatures xs) ys [ 0, 8 ] 1 8) to equal (Ok ( 26, 5.4 ))
+            , it "descends a param up for undershooted solution" <|
+                expect (paramDescend (padFeatures xs) ys [ 0, -4 ] 1 -4) to equal (Ok ( -30, -1 ))
+            , it "keeps params if correct solution" <|
+                expect (paramDescend (padFeatures xs) ys [ 1, 2 ] 1 2) to equal (Ok ( 0, 2 ))
+            ]
+        , describe "gradient descend"
+            [ it "descends when guess is wrong" <|
+                expect (descend xs ys [ 0.5, 2 ]) to equal (Ok ( -1.5, [ 0.55, 2.1 ] ))
+            , it "converges with gradient descend" <|
+                expect (gradientDescend xs ys (initialParameters xs) |> Result.map (List.map round)) to equal (Ok [ 1, 2 ])
+            , it "keeps same when already converged" <|
+                expect (gradientDescend xs ys [ 1, 2 ]) to equal (Ok [ 1, 2 ])
+            ]
+        , describe "linear regression"
+            [ it "trains algorithm" <|
+                expect ((linearRegression xs ys).train () |> Result.map (.params >> List.map round)) to equal (Ok [ 1, 2 ])
+            , it "predicts future values" <|
+                expect ((linearRegression xs ys).train () |> Result.andThen (\r -> r.predict [ [ 4.0 ] ] |> Result.map (List.map round))) to equal (Ok [ 9 ])
+            ]
         ]

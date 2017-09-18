@@ -30,5 +30,13 @@ ys =
 main : Html msg
 main =
     linearRegression xs ys
+        |> (\model -> model.train ())
+        |> Result.andThen
+            (\model ->
+                model.predict
+                    [ [ 4.0 ]
+                    , [ 5.0 ]
+                    ]
+            )
         |> toString
         |> text

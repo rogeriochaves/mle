@@ -88,6 +88,17 @@ initialParameters xs =
     List.repeat (Matrix.width xs + 1) 0
 
 
-linearRegression : Matrix Float -> Vector Float -> Result String (Vector Float)
 linearRegression xs ys =
-    gradientDescend xs ys (initialParameters xs)
+    { train =
+        \() ->
+            case gradientDescend xs ys (initialParameters xs) of
+                Ok trainedParams ->
+                    Ok
+                        { params = trainedParams
+                        , predict = \xs -> hypotesis (padFeatures xs) trainedParams
+                        }
+
+                Err err ->
+                    Err err
+    , params = initialParameters xs
+    }
