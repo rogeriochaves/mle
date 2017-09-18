@@ -1,9 +1,7 @@
 module LinearRegression exposing (..)
 
-import Array exposing (Array)
-import Array.Extra
-import Math.Matrix exposing (..)
-import Matrix exposing (..)
+import Helpers exposing (flatResultList)
+import Math.Matrix as Matrix exposing (..)
 import Unwrap exposing (..)
 
 
@@ -17,76 +15,79 @@ threshold =
     0.001
 
 
-hypotesis : Matrix Float -> Array Float -> Array Float
+hypotesis : Matrix Float -> Vector Float -> Result String (Vector Float)
 hypotesis xs parameters =
     let
         parameters_ =
-            Matrix.fromList [ Array.toList parameters ]
-                |> unwrap "could not convert parameters list to Matrix"
-                |> transpose
+            transpose [ parameters ]
     in
     multiply xs parameters_
-        |> unwrap "could not multiply matrixes"
-        |> getColumn 0
-        |> unwrap "could not get row 0"
+        |> Result.andThen
+            (getColumn 0 >> Result.fromMaybe "could not find column 0")
 
 
-paramDescend : Matrix Float -> Array Float -> Array Float -> Int -> Float -> ( Float, Float )
+paramDescend : Matrix Float -> Vector Float -> Vector Float -> Int -> Float -> Result String ( Float, Float )
 paramDescend xs ys parameters index param =
     let
         dataSize =
             toFloat (Matrix.height xs)
     in
     hypotesis xs parameters
-        |> Array.Extra.map2 (\y h -> h - y) ys
-        |> Array.Extra.map2 (*) (Matrix.getColumn index xs |> unwrap "could not get column")
-        |> Array.foldl (+) 0
-        |> (\sumHypotesis -> (1 / dataSize) * sumHypotesis)
-        |> (\squaredError -> ( squaredError, param - learningRate * squaredError ))
+        |> Result.map
+            (List.map2 (\y h -> h - y) ys
+                >> List.map2 (*) (Matrix.getColumn index xs |> unwrap "could not get column")
+                >> List.foldl (+) 0
+                >> (\sumHypotesis -> (1 / dataSize) * sumHypotesis)
+                >> (\squaredError -> ( squaredError, param - learningRate * squaredError ))
+            )
 
 
 padFeatures : Matrix Float -> Matrix Float
 padFeatures xs =
     xs
-        |> addColumn (Array.repeat (Matrix.height xs) 1)
+        |> prependColumn (List.repeat (Matrix.height xs) 1)
+        |> Result.toMaybe
         |> unwrap "could not concat 1s to features list"
 
 
-descend : Matrix Float -> Array Float -> Array Float -> ( Float, Array Float )
+descend : Matrix Float -> Vector Float -> Vector Float -> Result String ( Float, Vector Float )
 descend xs ys parameters =
     let
         xs_ =
             padFeatures xs
 
         updatedParamsAndErrors =
-            Array.indexedMap (paramDescend xs_ ys parameters) parameters
-
-        totalErrors =
-            Array.foldl (\( error, _ ) total -> total + error) 0 updatedParamsAndErrors
-
-        updatedParams =
-            Array.map Tuple.second updatedParamsAndErrors
+            List.indexedMap (paramDescend xs_ ys parameters) parameters
+                |> flatResultList
     in
-    ( totalErrors, updatedParams )
+    updatedParamsAndErrors
+        |> Result.map
+            (List.foldl
+                (\( error, param ) ( totalErrors, params ) ->
+                    ( totalErrors + error, params ++ [ param ] )
+                )
+                ( 0, [] )
+            )
 
 
-gradientDescend : Matrix Float -> Array Float -> Array Float -> Array Float
+gradientDescend : Matrix Float -> Vector Float -> Vector Float -> Result String (Vector Float)
 gradientDescend xs ys parameters =
     let
-        ( error, nextParameters ) =
-            descend xs ys parameters
+        nextDescend ( error, nextParameters ) =
+            if abs error < threshold then
+                Ok nextParameters
+            else
+                gradientDescend xs ys nextParameters
     in
-    if abs error < threshold then
-        nextParameters
-    else
-        gradientDescend xs ys nextParameters
+    descend xs ys parameters
+        |> Result.andThen nextDescend
 
 
-initialParameters : Matrix a -> Array number
+initialParameters : Matrix a -> Vector number
 initialParameters xs =
-    Array.repeat (Matrix.width xs + 1) 0
+    List.repeat (Matrix.width xs + 1) 0
 
 
-linearRegression : Matrix Float -> Array Float -> Array Float
+linearRegression : Matrix Float -> Vector Float -> Result String (Vector Float)
 linearRegression xs ys =
     gradientDescend xs ys (initialParameters xs)

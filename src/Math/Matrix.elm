@@ -1,84 +1,95 @@
 module Math.Matrix exposing (..)
 
-import Array exposing (Array)
-import Array.Extra
-import Matrix exposing (..)
+import Helpers exposing (maybeFlatMap)
+import List.Extra
 
 
-transpose : Matrix number -> Matrix number
-transpose matrix =
-    indexedFoldl
-        (\x y elem inverse ->
-            Matrix.set y x elem inverse
-        )
-        (Matrix.repeat (Matrix.height matrix) (Matrix.width matrix) 0)
-        matrix
+type alias Matrix a =
+    List (List a)
 
 
-foldl : (number -> b -> b) -> b -> Matrix number -> b
-foldl fn initial matrix =
-    Array.foldl fn initial matrix.data
+type alias Vector a =
+    List a
 
 
-indexedFoldl : (Int -> Int -> number -> b -> b) -> b -> Matrix number -> b
-indexedFoldl fn initial matrix =
+height : Matrix a -> Int
+height matrix =
+    List.length matrix
+
+
+width : Matrix a -> Int
+width matrix =
+    List.head matrix
+        |> Maybe.withDefault []
+        |> List.length
+
+
+size : Matrix a -> ( Int, Int )
+size matrix =
+    ( height matrix, width matrix )
+
+
+transpose : Matrix a -> Matrix a
+transpose =
+    List.Extra.transpose
+
+
+getRow : Int -> Matrix a -> Maybe (Vector a)
+getRow =
+    List.Extra.getAt
+
+
+getColumn : Int -> Matrix a -> Maybe (Vector a)
+getColumn n =
+    List.Extra.getAt n << transpose
+
+
+getColumns : List Int -> Matrix a -> Maybe (Matrix a)
+getColumns ns matrix =
     let
-        fn_ curr acc =
-            let
-                i =
-                    acc.index
-
-                x =
-                    i % width matrix
-
-                y =
-                    i // width matrix
-            in
-            { index = i + 1, acc = fn x y curr acc.acc }
+        transMatrix =
+            transpose matrix
     in
-    Array.foldl fn_ { index = 0, acc = initial } matrix.data
-        |> .acc
+    maybeFlatMap (\n -> List.Extra.getAt n transMatrix) ns
 
 
-multiply : Matrix number -> Matrix number -> Maybe (Matrix number)
+multiplyVector : Matrix number -> Vector number -> Vector number
+multiplyVector matrix vector =
+    let
+        multiplyRow row result =
+            result ++ [ List.sum (List.map2 (*) vector row) ]
+    in
+    List.foldl multiplyRow [] matrix
+
+
+multiply : Matrix number -> Matrix number -> Result String (Matrix number)
 multiply a b =
     let
-        initial =
-            Matrix.repeat (Matrix.width b) (Matrix.height a) 0
+        bTrans =
+            transpose b
 
-        mult x y _ result =
-            case ( result, Matrix.getRow y a, Matrix.getColumn x b ) of
-                ( Just matrix, Just row, Just column ) ->
-                    let
-                        value =
-                            Array.Extra.map2 (\x y -> x * y) row column
-                                |> Array.foldl (+) 0
-                    in
-                    Just (Matrix.set x y value matrix)
-
-                _ ->
-                    Nothing
+        multiplyRow row result =
+            result ++ [ multiplyVector bTrans row ]
     in
-    indexedFoldl mult (Just initial) initial
+    if width a /= height b then
+        Err <|
+            "Matrix sizes are not fit for multiplication: Could not multiply a "
+                ++ toString (size a)
+                ++ " matrix with a "
+                ++ toString (size b)
+                ++ " matrix"
+    else
+        Ok (List.foldl multiplyRow [] a)
 
 
-addColumn : Array number -> Matrix number -> Maybe (Matrix number)
-addColumn column matrix =
-    let
-        initial =
-            Matrix.repeat (Matrix.width matrix + 1) (Matrix.height matrix) 0
-
-        addCol x y _ result =
-            case result of
-                Just newMatrix ->
-                    if x == 0 then
-                        Array.get y column
-                            |> Maybe.map (\newElem -> Matrix.set x y newElem newMatrix)
-                    else
-                        Matrix.get (x - 1) y matrix
-                            |> Maybe.map (\elem -> Matrix.set x y elem newMatrix)
-
-                Nothing ->
-                    Nothing
-    in
-    indexedFoldl addCol (Just initial) initial
+prependColumn : Vector a -> Matrix a -> Result String (Matrix a)
+prependColumn column matrix =
+    if List.length column /= height matrix then
+        Err <|
+            "Could not prepend a "
+                ++ toString (List.length column)
+                ++ "-sized vector to a "
+                ++ toString (size matrix)
+                ++ " matrix"
+    else
+        Ok <| transpose (column :: transpose matrix)

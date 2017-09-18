@@ -1,10 +1,8 @@
 module Main exposing (..)
 
-import Array
 import Html exposing (..)
 import LinearRegression exposing (..)
 import Math.Matrix exposing (..)
-import Matrix exposing (..)
 import Unwrap exposing (..)
 
 
@@ -14,23 +12,19 @@ data =
     , [ 2.0, 4.5 ]
     , [ 3.0, 6.5 ]
     ]
-        |> fromList
-        |> unwrap "could not convert list to Matrix"
 
 
 xs : Matrix Float
 xs =
-    [ Array.toList (getColumn 0 data |> unwrap "could not get column 0 from data")
-    ]
-        |> Matrix.fromList
-        |> unwrap "could parse to matrix"
+    getColumns [ 0 ] data
+        |> unwrap "could not get xs"
         |> transpose
 
 
-ys : Array.Array Float
+ys : Vector Float
 ys =
     getColumn 1 data
-        |> unwrap "could not get column 1 from data"
+        |> unwrap "could not get ys"
 
 
 main : Html msg
