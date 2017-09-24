@@ -72,15 +72,15 @@ descend xs ys parameters =
 
 gradientDescend : Matrix Float -> Vector Float -> Vector Float -> Result String (Vector Float)
 gradientDescend xs ys parameters =
-    let
-        nextDescend ( error, nextParameters ) =
+    case descend xs ys parameters of
+        Ok ( error, nextParameters ) ->
             if abs error < threshold then
                 Ok nextParameters
             else
                 gradientDescend xs ys nextParameters
-    in
-    descend xs ys parameters
-        |> Result.andThen nextDescend
+
+        Err err ->
+            Err err
 
 
 initialParameters : Matrix a -> Vector number

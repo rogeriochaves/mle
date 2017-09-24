@@ -44,6 +44,12 @@ getColumn n =
     List.Extra.getAt n << transpose
 
 
+getAt : Int -> Int -> Matrix a -> Maybe a
+getAt i j matrix =
+    getRow i matrix
+        |> Maybe.andThen (List.Extra.getAt j)
+
+
 getColumns : List Int -> Matrix a -> Maybe (Matrix a)
 getColumns ns matrix =
     let
