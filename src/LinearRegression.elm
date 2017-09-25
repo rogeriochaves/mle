@@ -83,22 +83,19 @@ gradientDescend xs ys parameters =
             Err err
 
 
-initialParameters : Matrix a -> Vector number
-initialParameters xs =
-    List.repeat (Matrix.width xs + 1) 0
+type alias Model =
+    Result String (Vector Float)
 
 
-linearRegression xs ys =
-    { train =
-        \() ->
-            case gradientDescend xs ys (initialParameters xs) of
-                Ok trainedParams ->
-                    Ok
-                        { params = trainedParams
-                        , predict = \xs -> hypotesis (padFeatures xs) trainedParams
-                        }
+train : Matrix Float -> Vector Float -> Model
+train xs ys =
+    let
+        initialParameters =
+            List.repeat (Matrix.width xs + 1) 0
+    in
+    gradientDescend xs ys initialParameters
 
-                Err err ->
-                    Err err
-    , params = initialParameters xs
-    }
+
+predict : Matrix Float -> Model -> Result String (Vector Float)
+predict xs =
+    Result.andThen (hypotesis <| padFeatures xs)

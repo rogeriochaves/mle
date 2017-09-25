@@ -1,7 +1,7 @@
 module Main exposing (..)
 
 import Html exposing (..)
-import LinearRegression exposing (..)
+import LinearRegression
 import Math.Matrix exposing (..)
 import Preprocessing exposing (scaleMatrix)
 import Unwrap exposing (..)
@@ -37,8 +37,7 @@ main =
         testXs =
             List.drop 3 scaledXs
     in
-    linearRegression trainXs trainYs
-        |> (\model -> model.train ())
-        |> Result.andThen (\model -> model.predict testXs)
+    LinearRegression.train trainXs trainYs
+        |> LinearRegression.predict testXs
         |> toString
         |> text
