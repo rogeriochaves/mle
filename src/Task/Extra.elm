@@ -7,21 +7,24 @@ import Task
 
 type Msg
     = NoOp
-    | Result (Html Msg)
+    | Render (Result String (Html Msg))
 
 
-taskProgram : Task.Task Never (Html Msg) -> Program Never (Maybe (Html Msg)) Msg
+taskProgram : Task String (Html Msg) -> Program Never (Maybe (Html Msg)) Msg
 taskProgram viewTask =
     Html.program
-        { init = ( Nothing, Task.perform Result viewTask )
+        { init = ( Nothing, Task.attempt Render viewTask )
         , update =
             \msg model ->
                 case msg of
                     NoOp ->
                         ( model, Cmd.none )
 
-                    Result view ->
+                    Render (Ok view) ->
                         ( Just view, Cmd.none )
+
+                    Render (Err err) ->
+                        ( Just (text <| toString err), Cmd.none )
         , subscriptions = always Sub.none
         , view = Maybe.withDefault (text "Loading...")
         }
