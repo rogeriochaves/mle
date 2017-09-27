@@ -87,13 +87,14 @@ type alias Model =
     Result String (Vector Float)
 
 
+initialParameters : Matrix a -> List number
+initialParameters xs =
+    List.repeat (Matrix.width xs + 1) 0
+
+
 train : Matrix Float -> Vector Float -> Model
 train xs ys =
-    let
-        initialParameters =
-            List.repeat (Matrix.width xs + 1) 0
-    in
-    gradientDescend xs ys initialParameters
+    gradientDescend xs ys (initialParameters xs)
 
 
 predict : Matrix Float -> Model -> Result String (Vector Float)

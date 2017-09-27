@@ -52,8 +52,8 @@ suite =
             ]
         , describe "linear regression"
             [ it "trains algorithm" <|
-                expect ((linearRegression xs ys).train () |> Result.map (.params >> List.map round)) to equal (Ok [ 1, 2 ])
+                expect (train xs ys |> Result.map (List.map round)) to equal (Ok [ 1, 2 ])
             , it "predicts future values" <|
-                expect ((linearRegression xs ys).train () |> Result.andThen (\r -> r.predict [ [ 4.0 ] ] |> Result.map (List.map round))) to equal (Ok [ 9 ])
+                expect (train xs ys |> predict [ [ 4.0 ] ] |> Result.map (List.map round)) to equal (Ok [ 9 ])
             ]
         ]

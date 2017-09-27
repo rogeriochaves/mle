@@ -6,6 +6,8 @@ import Fuzz exposing (..)
 import List.Extra
 import Math.Matrix exposing (..)
 import Preprocessing exposing (..)
+import Random
+import Random.List
 import Test exposing (..)
 import Unwrap exposing (unwrap)
 
@@ -66,6 +68,35 @@ suite =
                             [ greaterThan -1
                             , atMost 1
                             ]
+            ]
+        , describe "trainTestSplit"
+            [ it "splits train and test data" <|
+                let
+                    xs =
+                        [ List.range 0 10 ] |> transpose
+
+                    ys =
+                        List.range 10 20
+
+                    seed =
+                        Random.initialSeed 1
+
+                    trainXs =
+                        [ [ 10 ], [ 4 ], [ 8 ], [ 7 ], [ 6 ], [ 5 ], [ 0 ], [ 2 ], [ 1 ] ]
+
+                    trainYs =
+                        [ 20, 14, 18, 17, 16, 15, 10, 12, 11 ]
+
+                    testXs =
+                        [ [ 9 ], [ 3 ] ]
+
+                    testYs =
+                        [ 19, 13 ]
+
+                    ( _, nextSeed ) =
+                        Random.step (Random.List.shuffle ys) seed
+                in
+                expect (trainTestSplit xs ys seed) to equal ( trainXs, trainYs, testXs, testYs, nextSeed )
             ]
         ]
 
