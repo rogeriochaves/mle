@@ -12,7 +12,7 @@ learningRate =
 
 threshold : Float
 threshold =
-    0.001
+    0.01
 
 
 hypotesis : Matrix Float -> Vector Float -> Result String (Vector Float)
