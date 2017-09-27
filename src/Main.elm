@@ -2,7 +2,6 @@ module Main exposing (..)
 
 import Csv
 import Csv.Decode
-import Helpers
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Http
@@ -11,69 +10,67 @@ import Mle.LinearRegression as LinearRegression exposing (defaultSettings)
 import Mle.Preprocessing exposing (..)
 import Platform exposing (Task)
 import Plot.Extra exposing (..)
-import Random.Extra.Task
-import Task
-import Task.Extra
+import TaskIO exposing (..)
 
 
-main : Program Never (Maybe (Html Task.Extra.Msg)) Task.Extra.Msg
+main : Program Never (Maybe (Html TaskIO.Msg)) TaskIO.Msg
 main =
-    Task.Extra.taskProgram run
+    TaskIO.program run
 
 
-descodeSampleData : Csv.Decode.Decoder (List Float -> a) a
-descodeSampleData =
-    Csv.Decode.map (\index x y -> [ index, x, y ])
-        (Csv.Decode.next String.toFloat
-            |> Csv.Decode.andMap (Csv.Decode.next String.toFloat)
-            |> Csv.Decode.andMap (Csv.Decode.next String.toFloat)
-        )
-
-
-run : Task String (Html Task.Extra.Msg)
+run : Task String (Html TaskIO.Msg)
 run =
-    Http.getString "http://localhost:8000/sampleData.txt"
-        |> Http.toTask
-        |> Task.mapError toString
-        |> Task.andThen
-            (\csv ->
-                Csv.parse csv
-                    |> Csv.Decode.decodeCsv descodeSampleData
-                    |> Result.map (List.take 400)
-                    |> Result.mapError toString
-                    |> Helpers.resultToTask
-            )
-        |> Task.andThen
-            (\data ->
-                let
-                    scaledXs =
-                        unsafeGetColumns [ 1 ] data
-                            |> scaleMatrix
+    returnHttp (Http.getString "http://localhost:8000/sampleData.txt")
+        |> andThen parseCsv
+        |> andThen splitData
+        |> andThen trainAndPredict
+        |> andThen plotResults
 
-                    ys =
-                        unsafeGetColumn 2 data
-                in
-                trainTestSplit scaledXs ys
-                    |> Random.Extra.Task.toTask
-                    |> Task.mapError toString
-            )
-        |> Task.map
-            (\( trainXs, trainYs, testXs, testYs ) ->
-                let
-                    predictions =
-                        LinearRegression.init { defaultSettings | learningRate = 1 }
-                            |> LinearRegression.train trainXs trainYs
-                            |> LinearRegression.predict testXs
-                in
-                case predictions of
-                    Ok predictions ->
-                        div [ style [ ( "width", "800px" ), ( "height", "800px" ) ] ]
-                            [ plotSeries
-                                [ scatter (trainXs |> unsafeGetColumn 0) trainYs
-                                , plot (testXs |> unsafeGetColumn 0) predictions
-                                ]
-                            ]
 
-                    Err err ->
-                        text err
-            )
+parseCsv : String -> TaskIO (Matrix Float)
+parseCsv csv =
+    let
+        descodeSampleData =
+            Csv.Decode.map (\index x y -> [ index, x, y ])
+                (Csv.Decode.next String.toFloat
+                    |> Csv.Decode.andMap (Csv.Decode.next String.toFloat)
+                    |> Csv.Decode.andMap (Csv.Decode.next String.toFloat)
+                )
+    in
+    Csv.parse csv
+        |> Csv.Decode.decodeCsv descodeSampleData
+        |> Result.map (List.take 400)
+        |> returnResult
+
+
+splitData : Matrix Float -> TaskIO ( Matrix Float, Vector Float, Matrix Float, Vector Float )
+splitData data =
+    let
+        scaledXs =
+            unsafeGetColumns [ 1 ] data
+                |> scaleMatrix
+
+        ys =
+            unsafeGetColumn 2 data
+    in
+    returnRandom (trainTestSplit scaledXs ys)
+
+
+trainAndPredict : ( Matrix Float, Vector Float, Matrix Float, a ) -> TaskIO ( Matrix Float, Vector Float, Matrix Float, a, Vector Float )
+trainAndPredict ( trainXs, trainYs, testXs, testYs ) =
+    LinearRegression.init { defaultSettings | learningRate = 1 }
+        |> LinearRegression.train trainXs trainYs
+        |> LinearRegression.predict testXs
+        |> Result.map (\predictions -> ( trainXs, trainYs, testXs, testYs, predictions ))
+        |> returnResult
+
+
+plotResults : ( Matrix Float, List Float, Matrix Float, a, List Float ) -> TaskIO (Html msg)
+plotResults ( trainXs, trainYs, testXs, testYs, predictions ) =
+    return <|
+        div [ style [ ( "width", "800px" ), ( "height", "800px" ) ] ]
+            [ plotSeries
+                [ scatter (trainXs |> unsafeGetColumn 0) trainYs
+                , plot (testXs |> unsafeGetColumn 0) predictions
+                ]
+            ]

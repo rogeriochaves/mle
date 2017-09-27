@@ -1,7 +1,5 @@
 module Helpers exposing (..)
 
-import Task
-
 
 flatResultList : List (Result error a) -> Result error (List a)
 flatResultList =
@@ -52,13 +50,3 @@ unwrap result =
 
         Err err ->
             Debug.crash err
-
-
-resultToTask : Result x a -> Task.Task x a
-resultToTask result =
-    case result of
-        Ok value ->
-            Task.succeed value
-
-        Err msg ->
-            Task.fail msg
