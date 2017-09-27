@@ -32,24 +32,26 @@ suite =
             expect (hypotesis xs [ 5 ]) to equal (Ok [ 5, 10, 15 ])
         , describe "param descend"
             [ it "descends a param down for overshooted solution" <|
-                expect (paramDescend (padFeatures xs) ys [ 0, 8 ] 1 8) to equal (Ok ( 26, 5.4 ))
+                expect (paramDescend defaultSettings (padFeatures xs) ys [ 0, 8 ] 1 8) to equal (Ok ( 26, 5.4 ))
             , it "descends a param up for undershooted solution" <|
-                expect (paramDescend (padFeatures xs) ys [ 0, -4 ] 1 -4) to equal (Ok ( -30, -1 ))
+                expect (paramDescend defaultSettings (padFeatures xs) ys [ 0, -4 ] 1 -4) to equal (Ok ( -30, -1 ))
             , it "keeps params if correct solution" <|
-                expect (paramDescend (padFeatures xs) ys [ 1, 2 ] 1 2) to equal (Ok ( 0, 2 ))
+                expect (paramDescend defaultSettings (padFeatures xs) ys [ 1, 2 ] 1 2) to equal (Ok ( 0, 2 ))
             ]
         , describe "gradient descend"
             [ it "descends when guess is wrong" <|
-                expect (descend xs ys [ 0.5, 2 ]) to equal (Ok ( -1.5, [ 0.55, 2.1 ] ))
+                expect (descend defaultSettings xs ys [ 0.5, 2 ]) to equal (Ok ( -1.5, [ 0.55, 2.1 ] ))
             , it "converges with gradient descend" <|
-                expect (gradientDescend xs ys (initialParameters xs) |> Result.map (List.map round)) to equal (Ok [ 1, 2 ])
+                expect (gradientDescend defaultSettings xs ys (initialParameters xs) 0 |> Result.map (List.map round)) to equal (Ok [ 1, 2 ])
             , it "keeps same when already converged" <|
-                expect (gradientDescend xs ys [ 1, 2 ]) to equal (Ok [ 1, 2 ])
+                expect (gradientDescend defaultSettings xs ys [ 1, 2 ] 0) to equal (Ok [ 1, 2 ])
             ]
         , describe "linear regression"
             [ it "trains algorithm" <|
-                expect (train xs ys |> Result.map (List.map round)) to equal (Ok [ 1, 2 ])
+                expect (init defaultSettings |> train xs ys |> Result.map (.params >> List.map round)) to equal (Ok [ 1, 2 ])
             , it "predicts future values" <|
-                expect (train xs ys |> predict [ [ 4.0 ] ] |> Result.map (List.map round)) to equal (Ok [ 9 ])
+                expect (init defaultSettings |> train xs ys |> predict [ [ 4.0 ] ] |> Result.map (List.map round)) to equal (Ok [ 9 ])
+            , it "limits attempts to converge" <|
+                expect (init { defaultSettings | maxIterations = 2 } |> train xs ys) to equal (Err "Failed to converge at a maximum of 2 iterations, try scaling the params and adjusting the learn rate")
             ]
         ]

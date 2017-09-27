@@ -4,7 +4,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Math.Matrix as Matrix exposing (..)
 import Mle
-import Mle.LinearRegression as LinearRegression
+import Mle.LinearRegression as LinearRegression exposing (defaultSettings)
 import Mle.Preprocessing exposing (..)
 import Plot.Extra exposing (..)
 import Random
@@ -35,7 +35,8 @@ run seed =
             trainTestSplit scaledXs ys seed
 
         predictions =
-            LinearRegression.train trainXs trainYs
+            LinearRegression.init { defaultSettings | learningRate = 1 }
+                |> LinearRegression.train trainXs trainYs
                 |> LinearRegression.predict testXs
     in
     case predictions of

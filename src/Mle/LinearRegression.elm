@@ -4,11 +4,6 @@ import Helpers exposing (..)
 import Math.Matrix as Matrix exposing (..)
 
 
-learningRate : Float
-learningRate =
-    0.1
-
-
 threshold : Float
 threshold =
     0.01
@@ -25,8 +20,8 @@ hypotesis xs parameters =
             (getColumn 0 >> Result.fromMaybe "could not find column 0")
 
 
-paramDescend : Matrix Float -> Vector Float -> Vector Float -> Int -> Float -> Result String ( Float, Float )
-paramDescend xs ys parameters index param =
+paramDescend : Settings -> Matrix Float -> Vector Float -> Vector Float -> Int -> Float -> Result String ( Float, Float )
+paramDescend settings xs ys parameters index param =
     let
         dataSize =
             toFloat (Matrix.height xs)
@@ -37,7 +32,7 @@ paramDescend xs ys parameters index param =
                 >> List.map2 (*) (Matrix.getColumn index xs |> unwrapMaybe "could not get column")
                 >> List.foldl (+) 0
                 >> (\sumHypotesis -> (1 / dataSize) * sumHypotesis)
-                >> (\squaredError -> ( squaredError, param - learningRate * squaredError ))
+                >> (\squaredError -> ( squaredError, param - settings.learningRate * squaredError ))
             )
 
 
@@ -48,14 +43,14 @@ padFeatures xs =
         |> unwrap
 
 
-descend : Matrix Float -> Vector Float -> Vector Float -> Result String ( Float, Vector Float )
-descend xs ys parameters =
+descend : Settings -> Matrix Float -> Vector Float -> Vector Float -> Result String ( Float, Vector Float )
+descend settings xs ys parameters =
     let
         xs_ =
             padFeatures xs
 
         updatedParamsAndErrors =
-            List.indexedMap (paramDescend xs_ ys parameters) parameters
+            List.indexedMap (paramDescend settings xs_ ys parameters) parameters
                 |> flatResultList
     in
     updatedParamsAndErrors
@@ -68,21 +63,32 @@ descend xs ys parameters =
             )
 
 
-gradientDescend : Matrix Float -> Vector Float -> Vector Float -> Result String (Vector Float)
-gradientDescend xs ys parameters =
-    case descend xs ys parameters of
+gradientDescend : Settings -> Matrix Float -> Vector Float -> Vector Float -> Int -> Result String (Vector Float)
+gradientDescend settings xs ys parameters iteration =
+    case descend settings xs ys parameters of
         Ok ( error, nextParameters ) ->
-            if abs error < threshold then
+            if iteration > settings.maxIterations then
+                Err ("Failed to converge at a maximum of " ++ toString settings.maxIterations ++ " iterations, try scaling the params and adjusting the learn rate")
+            else if abs error < threshold then
                 Ok nextParameters
             else
-                gradientDescend xs ys nextParameters
+                gradientDescend settings xs ys nextParameters (iteration + 1)
 
         Err err ->
             Err err
 
 
 type alias Model =
-    Result String (Vector Float)
+    Result String { settings : Settings, params : Vector Float }
+
+
+type alias Settings =
+    { learningRate : Float, maxIterations : Int }
+
+
+defaultSettings : Settings
+defaultSettings =
+    { learningRate = 0.1, maxIterations = 1000 }
 
 
 initialParameters : Matrix a -> List number
@@ -90,11 +96,20 @@ initialParameters xs =
     List.repeat (Matrix.width xs + 1) 0
 
 
-train : Matrix Float -> Vector Float -> Model
+init : Settings -> Model
+init settings =
+    Ok { params = [], settings = settings }
+
+
+train : Matrix Float -> Vector Float -> Model -> Model
 train xs ys =
-    gradientDescend xs ys (initialParameters xs)
+    Result.andThen
+        (\model ->
+            gradientDescend model.settings xs ys (initialParameters xs) 0
+                |> Result.map (\params -> { model | params = params })
+        )
 
 
 predict : Matrix Float -> Model -> Result String (Vector Float)
 predict xs =
-    Result.andThen (hypotesis <| padFeatures xs)
+    Result.andThen (.params >> hypotesis (padFeatures xs))
