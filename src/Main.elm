@@ -3,6 +3,7 @@ module Main exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Math.Matrix as Matrix exposing (..)
+import Mle
 import Mle.LinearRegression as LinearRegression
 import Mle.Preprocessing exposing (..)
 import Plot.Extra exposing (..)
@@ -10,13 +11,18 @@ import Random
 import SampleData
 
 
+main : Program Never (Maybe Int) (Maybe Int)
+main =
+    Mle.program run
+
+
 data : Matrix Float
 data =
     List.take 400 SampleData.data
 
 
-main : Html msg
-main =
+run : Random.Seed -> Html msg
+run seed =
     let
         scaledXs =
             unsafeGetColumns [ 1 ] data
@@ -26,11 +32,8 @@ main =
         ys =
             unsafeGetColumn 2 data
 
-        randomSeed =
-            Random.initialSeed 1
-
         ( trainXs, trainYs, testXs, testYs, _ ) =
-            trainTestSplit scaledXs ys randomSeed
+            trainTestSplit scaledXs ys seed
 
         predictions =
             LinearRegression.train trainXs trainYs
