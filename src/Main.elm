@@ -26,7 +26,6 @@ run seed =
     let
         scaledXs =
             unsafeGetColumns [ 1 ] data
-                |> transpose
                 |> scaleMatrix
 
         ys =

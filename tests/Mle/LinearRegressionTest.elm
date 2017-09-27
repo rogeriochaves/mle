@@ -18,7 +18,6 @@ data =
 xs : Matrix Float
 xs =
     unsafeGetColumns [ 0 ] data
-        |> transpose
 
 
 ys : Vector Float

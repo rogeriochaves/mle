@@ -57,6 +57,7 @@ getColumns ns matrix =
             transpose matrix
     in
     maybeFlatMap (\n -> List.Extra.getAt n transMatrix) ns
+        |> Maybe.map transpose
 
 
 multiplyVector : Matrix number -> Vector number -> Vector number
