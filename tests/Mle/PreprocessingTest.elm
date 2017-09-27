@@ -1,4 +1,4 @@
-module PreprocessingTest exposing (..)
+module Mle.PreprocessingTest exposing (..)
 
 import ElmTestBDDStyle exposing (..)
 import Expect exposing (..)
@@ -7,7 +7,6 @@ import List.Extra
 import Math.Matrix exposing (..)
 import Mle.Preprocessing exposing (..)
 import Random
-import Random.List
 import Test exposing (..)
 
 
@@ -77,9 +76,6 @@ suite =
                     ys =
                         List.range 10 20
 
-                    seed =
-                        Random.initialSeed 1
-
                     trainXs =
                         [ [ 10 ], [ 4 ], [ 8 ], [ 7 ], [ 6 ], [ 5 ], [ 0 ], [ 2 ], [ 1 ] ]
 
@@ -92,10 +88,10 @@ suite =
                     testYs =
                         [ 19, 13 ]
 
-                    ( _, nextSeed ) =
-                        Random.step (Random.List.shuffle ys) seed
+                    ( result, _ ) =
+                        Random.step (trainTestSplit xs ys) (Random.initialSeed 1)
                 in
-                expect (trainTestSplit xs ys seed) to equal ( trainXs, trainYs, testXs, testYs, nextSeed )
+                expect result to equal ( trainXs, trainYs, testXs, testYs )
             ]
         ]
 
