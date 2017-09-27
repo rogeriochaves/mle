@@ -2,13 +2,12 @@ module Main exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import LinearRegression
 import Math.Matrix as Matrix exposing (..)
-import Plot exposing (..)
-import Preprocessing exposing (scaleMatrix)
+import Mle.LinearRegression as LinearRegression
+import Mle.Preprocessing exposing (..)
+import Plot.Extra exposing (..)
 import Random
 import SampleData
-import Unwrap exposing (..)
 
 
 data : Matrix Float
@@ -31,28 +30,20 @@ main =
             Random.initialSeed 1
 
         ( trainXs, trainYs, testXs, testYs, _ ) =
-            Preprocessing.trainTestSplit scaledXs ys randomSeed
+            trainTestSplit scaledXs ys randomSeed
 
         predictions =
             LinearRegression.train trainXs trainYs
                 |> LinearRegression.predict testXs
-                |> Result.toMaybe
-                |> unwrap "failed linear regression"
     in
-    div [ style [ ( "width", "800px" ), ( "height", "800px" ) ] ]
-        [ viewSeries
-            [ scatter (trainXs |> unsafeGetColumn 0) trainYs
-            , plot (testXs |> unsafeGetColumn 0) predictions
-            ]
-            []
-        ]
+    case predictions of
+        Ok predictions ->
+            div [ style [ ( "width", "800px" ), ( "height", "800px" ) ] ]
+                [ plotSeries
+                    [ scatter (trainXs |> unsafeGetColumn 0) trainYs
+                    , plot (testXs |> unsafeGetColumn 0) predictions
+                    ]
+                ]
 
-
-scatter : List Float -> List Float -> Series b msg
-scatter xs ys =
-    dots (\_ -> List.map2 circle xs ys)
-
-
-plot : List Float -> List Float -> Series b msg
-plot xs ys =
-    line (\_ -> List.map2 clear xs ys)
+        Err err ->
+            text err

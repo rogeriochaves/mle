@@ -1,11 +1,10 @@
-module LinearRegressionTest exposing (..)
+module Mle.LinearRegressionTest exposing (..)
 
 import ElmTestBDDStyle exposing (..)
 import Expect exposing (..)
-import LinearRegression exposing (..)
 import Math.Matrix exposing (..)
+import Mle.LinearRegression exposing (..)
 import Test exposing (..)
-import Unwrap exposing (..)
 
 
 data : Matrix Float
@@ -18,15 +17,13 @@ data =
 
 xs : Matrix Float
 xs =
-    getColumns [ 0 ] data
-        |> unwrap "could not get xs"
+    unsafeGetColumns [ 0 ] data
         |> transpose
 
 
 ys : Vector Float
 ys =
-    getColumn 1 data
-        |> unwrap "could not get ys"
+    unsafeGetColumn 1 data
 
 
 suite : Test

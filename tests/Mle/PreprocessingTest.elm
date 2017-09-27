@@ -5,11 +5,10 @@ import Expect exposing (..)
 import Fuzz exposing (..)
 import List.Extra
 import Math.Matrix exposing (..)
-import Preprocessing exposing (..)
+import Mle.Preprocessing exposing (..)
 import Random
 import Random.List
 import Test exposing (..)
-import Unwrap exposing (unwrap)
 
 
 xsBig : Matrix Float
@@ -49,7 +48,7 @@ suite =
                     , [ 0.5, 0.0 ]
                     ]
             , it "scales a vector" <|
-                expect (getColumn 0 xsBig |> unwrap "" |> scaleVector) to equal [ -0.5, 0.0, 0.5 ]
+                expect (unsafeGetColumn 0 xsBig |> scaleVector) to equal [ -0.5, 0.0, 0.5 ]
             , fuzz2 (fuzzVector 3) (Fuzz.intRange 0 2) "always keep values between -1 and +1 on vectors" <|
                 \fuzzVector index ->
                     scaleVector fuzzVector

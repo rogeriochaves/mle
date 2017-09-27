@@ -30,3 +30,23 @@ maybeFlatMap f =
                     Maybe.map ((::) x) acc
     in
     List.foldr step (Just [])
+
+
+unwrapMaybe : String -> Maybe a -> a
+unwrapMaybe msg maybe =
+    case maybe of
+        Just x ->
+            x
+
+        _ ->
+            Debug.crash ("unwrap failed " ++ toString maybe ++ ": " ++ msg)
+
+
+unwrap : Result String value -> value
+unwrap result =
+    case result of
+        Ok value ->
+            value
+
+        Err err ->
+            Debug.crash err

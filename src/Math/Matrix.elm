@@ -1,8 +1,7 @@
 module Math.Matrix exposing (..)
 
-import Helpers exposing (maybeFlatMap)
+import Helpers exposing (maybeFlatMap, unwrapMaybe)
 import List.Extra
-import Unwrap exposing (unwrap)
 
 
 type alias Matrix a =
@@ -104,9 +103,9 @@ prependColumn column matrix =
 
 unsafeGetColumn : Int -> Matrix a -> Vector a
 unsafeGetColumn n =
-    getColumn n >> unwrap ("could not get column " ++ toString n)
+    getColumn n >> unwrapMaybe ("could not get column " ++ toString n)
 
 
 unsafeGetColumns : List Int -> Matrix a -> Matrix a
 unsafeGetColumns ns =
-    getColumns ns >> unwrap ("could not get columns " ++ toString ns)
+    getColumns ns >> unwrapMaybe ("could not get columns " ++ toString ns)

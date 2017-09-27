@@ -1,4 +1,4 @@
-module Preprocessing exposing (..)
+module Mle.Preprocessing exposing (..)
 
 import Math.Matrix as Matrix exposing (..)
 import Random

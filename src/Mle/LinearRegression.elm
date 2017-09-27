@@ -1,8 +1,7 @@
-module LinearRegression exposing (..)
+module Mle.LinearRegression exposing (..)
 
-import Helpers exposing (flatResultList)
+import Helpers exposing (..)
 import Math.Matrix as Matrix exposing (..)
-import Unwrap exposing (..)
 
 
 learningRate : Float
@@ -35,7 +34,7 @@ paramDescend xs ys parameters index param =
     hypotesis xs parameters
         |> Result.map
             (List.map2 (\y h -> h - y) ys
-                >> List.map2 (*) (Matrix.getColumn index xs |> unwrap "could not get column")
+                >> List.map2 (*) (Matrix.getColumn index xs |> unwrapMaybe "could not get column")
                 >> List.foldl (+) 0
                 >> (\sumHypotesis -> (1 / dataSize) * sumHypotesis)
                 >> (\squaredError -> ( squaredError, param - learningRate * squaredError ))
@@ -46,8 +45,7 @@ padFeatures : Matrix Float -> Matrix Float
 padFeatures xs =
     xs
         |> prependColumn (List.repeat (Matrix.height xs) 1)
-        |> Result.toMaybe
-        |> unwrap "could not concat 1s to features list"
+        |> unwrap
 
 
 descend : Matrix Float -> Vector Float -> Vector Float -> Result String ( Float, Vector Float )
