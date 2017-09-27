@@ -3,17 +3,21 @@ module Main exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Math.Matrix as Matrix exposing (..)
-import Mle
 import Mle.LinearRegression as LinearRegression exposing (defaultSettings)
 import Mle.Preprocessing exposing (..)
+import Platform exposing (Task)
 import Plot.Extra exposing (..)
 import Random
+import Random.Extra.Task
+import Random.Int
 import SampleData
+import Task
+import Task.Extra
 
 
-main : Program Never (Maybe Int) (Maybe Int)
+main : Program Never (Maybe (Html Task.Extra.Msg)) Task.Extra.Msg
 main =
-    Mle.program run
+    Task.Extra.taskProgram run
 
 
 data : Matrix Float
@@ -21,32 +25,40 @@ data =
     List.take 400 SampleData.data
 
 
-run : Random.Seed -> Html msg
-run seed =
-    let
-        scaledXs =
-            unsafeGetColumns [ 1 ] data
-                |> scaleMatrix
+run : Task Never (Html Task.Extra.Msg)
+run =
+    Random.Int.anyInt
+        |> Random.Extra.Task.toTask
+        |> Task.map
+            (\seed ->
+                let
+                    scaledXs =
+                        unsafeGetColumns [ 1 ] data
+                            |> scaleMatrix
 
-        ys =
-            unsafeGetColumn 2 data
+                    ys =
+                        unsafeGetColumn 2 data
 
-        ( trainXs, trainYs, testXs, testYs, _ ) =
-            trainTestSplit scaledXs ys seed
+                    randomSeed =
+                        Random.initialSeed seed
 
-        predictions =
-            LinearRegression.init { defaultSettings | learningRate = 1 }
-                |> LinearRegression.train trainXs trainYs
-                |> LinearRegression.predict testXs
-    in
-    case predictions of
-        Ok predictions ->
-            div [ style [ ( "width", "800px" ), ( "height", "800px" ) ] ]
-                [ plotSeries
-                    [ scatter (trainXs |> unsafeGetColumn 0) trainYs
-                    , plot (testXs |> unsafeGetColumn 0) predictions
-                    ]
-                ]
+                    ( trainXs, trainYs, testXs, testYs, _ ) =
+                        trainTestSplit scaledXs ys randomSeed
 
-        Err err ->
-            text err
+                    predictions =
+                        LinearRegression.init { defaultSettings | learningRate = 1 }
+                            |> LinearRegression.train trainXs trainYs
+                            |> LinearRegression.predict testXs
+                in
+                case predictions of
+                    Ok predictions ->
+                        div [ style [ ( "width", "800px" ), ( "height", "800px" ) ] ]
+                            [ plotSeries
+                                [ scatter (trainXs |> unsafeGetColumn 0) trainYs
+                                , plot (testXs |> unsafeGetColumn 0) predictions
+                                ]
+                            ]
+
+                    Err err ->
+                        text err
+            )
