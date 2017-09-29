@@ -5,6 +5,7 @@ import Expect exposing (..)
 import Fuzz exposing (..)
 import List.Extra
 import Math.Matrix exposing (..)
+import Math.Vector exposing (..)
 import Mle.Preprocessing exposing (..)
 import Random
 import Test exposing (..)

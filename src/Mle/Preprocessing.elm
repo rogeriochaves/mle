@@ -1,6 +1,7 @@
 module Mle.Preprocessing exposing (..)
 
 import Math.Matrix as Matrix exposing (..)
+import Math.Vector as Vector exposing (..)
 import Random
 import Random.List
 

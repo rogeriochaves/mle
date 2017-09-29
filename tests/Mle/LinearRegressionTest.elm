@@ -3,6 +3,7 @@ module Mle.LinearRegressionTest exposing (..)
 import ElmTestBDDStyle exposing (..)
 import Expect exposing (..)
 import Math.Matrix exposing (..)
+import Math.Vector exposing (..)
 import Mle.LinearRegression exposing (..)
 import Test exposing (..)
 
@@ -29,18 +30,10 @@ suite : Test
 suite =
     describe "LinearRegression"
         [ it "calculates the hypotesis for all parameters" <|
-            expect (hypotesis xs [ 5 ]) to equal (Ok [ 5, 10, 15 ])
-        , describe "param descend"
-            [ it "descends a param down for overshooted solution" <|
-                expect (paramDescend defaultSettings (padFeatures xs) ys [ 0, 8 ] 1 8) to equal (Ok ( 26, 5.4 ))
-            , it "descends a param up for undershooted solution" <|
-                expect (paramDescend defaultSettings (padFeatures xs) ys [ 0, -4 ] 1 -4) to equal (Ok ( -30, -1 ))
-            , it "keeps params if correct solution" <|
-                expect (paramDescend defaultSettings (padFeatures xs) ys [ 1, 2 ] 1 2) to equal (Ok ( 0, 2 ))
-            ]
+            expect (hypotesis xs [ 5 ]) to equal [ 5, 10, 15 ]
         , describe "gradient descend"
             [ it "descends when guess is wrong" <|
-                expect (descend defaultSettings xs ys [ 0.5, 2 ]) to equal (Ok ( -1.5, [ 0.55, 2.1 ] ))
+                expect (descend defaultSettings xs ys [ 0.5, 2 ]) to equal ( -1.5, [ 0.55, 2.1 ] )
             , it "converges with gradient descend" <|
                 expect (gradientDescend defaultSettings xs ys (initialParameters xs) 0 |> Result.map (List.map round)) to equal (Ok [ 1, 2 ])
             , it "keeps same when already converged" <|

@@ -1,4 +1,4 @@
-module Main exposing (..)
+module Examples.LinearRegression exposing (..)
 
 import Csv
 import Csv.Decode
@@ -6,6 +6,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Http
 import Math.Matrix as Matrix exposing (..)
+import Math.Vector as Vector exposing (..)
 import Mle.LinearRegression as LinearRegression exposing (defaultSettings)
 import Mle.Preprocessing exposing (..)
 import Platform exposing (Task)
@@ -20,7 +21,7 @@ main =
 
 run : Task String (Html TaskIO.Msg)
 run =
-    returnHttp (Http.getString "http://localhost:8000/sampleData.txt")
+    returnHttp (Http.getString "http://localhost:8000/examples/linearSample.txt")
         |> andThen parseCsv
         |> andThen splitData
         |> andThen trainAndPredict

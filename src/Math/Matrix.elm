@@ -2,14 +2,11 @@ module Math.Matrix exposing (..)
 
 import Helpers exposing (maybeFlatMap, unwrapMaybe)
 import List.Extra
+import Math.Vector exposing (..)
 
 
 type alias Matrix a =
     List (List a)
-
-
-type alias Vector a =
-    List a
 
 
 height : Matrix a -> Int
