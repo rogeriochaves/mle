@@ -5,10 +5,10 @@ import Expect exposing (..)
 import Fuzz exposing (..)
 import List.Extra
 import Math.Matrix exposing (..)
-import Math.Vector exposing (..)
 import Mle.Preprocessing exposing (..)
 import Random
 import Test exposing (..)
+import TestHelpers exposing (..)
 
 
 xsBig : Matrix Float
@@ -95,20 +95,3 @@ suite =
                 expect result to equal ( trainXs, trainYs, testXs, testYs )
             ]
         ]
-
-
-fuzzMatrix : Int -> Int -> Fuzzer (Matrix Float)
-fuzzMatrix rows columns =
-    List.repeat rows (fuzzVector columns)
-        |> fuzzerTranspose
-
-
-fuzzVector : Int -> Fuzzer (Vector Float)
-fuzzVector length =
-    List.repeat length Fuzz.float
-        |> fuzzerTranspose
-
-
-fuzzerTranspose : List (Fuzzer a) -> Fuzzer (List a)
-fuzzerTranspose =
-    List.foldr (Fuzz.map2 (::)) (Fuzz.constant [])
