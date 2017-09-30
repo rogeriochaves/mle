@@ -34,11 +34,18 @@ run =
 parseCsv : String -> TaskIO (Matrix Float)
 parseCsv csv =
     let
+        petalIndex name =
+            List.Extra.elemIndex name [ "I. setosa", "I. versicolor" ]
+                |> Maybe.map toFloat
+                |> Result.fromMaybe "Unknown species"
+
         descodeSampleData =
-            Csv.Decode.map (\tumor_size growth is_cancer -> [ tumor_size, growth, is_cancer ])
+            Csv.Decode.map (\sepal_length sepal_width _ _ species -> [ sepal_length, sepal_width, species ])
                 (Csv.Decode.next String.toFloat
                     |> Csv.Decode.andMap (Csv.Decode.next String.toFloat)
                     |> Csv.Decode.andMap (Csv.Decode.next String.toFloat)
+                    |> Csv.Decode.andMap (Csv.Decode.next String.toFloat)
+                    |> Csv.Decode.andMap (Csv.Decode.next petalIndex)
                 )
     in
     Csv.parse csv
@@ -76,31 +83,25 @@ plotResults ( trainXs, trainYs, testXs, predictions ) =
 
         ys =
             trainYs ++ predictions
+
+        colors =
+            [ "red", "green" ]
+
+        dotAt xs y =
+            let
+                color =
+                    List.Extra.getAt (round y) colors |> Helpers.unwrapMaybe "no color found"
+
+                sepal_length =
+                    List.Extra.getAt 0 xs |> Helpers.unwrapMaybe "could not get first x"
+
+                sepal_width =
+                    List.Extra.getAt 1 xs |> Helpers.unwrapMaybe "could not get second x"
+            in
+            Plot.dot (Plot.viewCircle 5 color) (sepal_length + 1) (sepal_width + 1)
     in
     return <|
         div [ style [ ( "width", "800px" ), ( "height", "800px" ) ] ]
             [ plotSeries
-                [ Plot.dots
-                    (\_ ->
-                        List.map2
-                            (\xs y ->
-                                let
-                                    color =
-                                        if round y == 1 then
-                                            "red"
-                                        else
-                                            "green"
-
-                                    d1 =
-                                        List.Extra.getAt 0 xs |> Helpers.unwrapMaybe "could not get first x"
-
-                                    d2 =
-                                        List.Extra.getAt 1 xs |> Helpers.unwrapMaybe "could not get second x"
-                                in
-                                Plot.dot (Plot.viewCircle 5 color) (d1 + 1) (d2 + 1)
-                            )
-                            xs
-                            ys
-                    )
-                ]
+                [ Plot.dots (\_ -> List.map2 dotAt xs ys) ]
             ]
