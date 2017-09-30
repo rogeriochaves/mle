@@ -1,15 +1,18 @@
-module Examples.LinearRegression exposing (..)
+module Examples.LogisticRegression exposing (..)
 
 import Csv
 import Csv.Decode
+import Helpers
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Http
+import List.Extra
 import Math.Matrix as Matrix exposing (..)
 import Math.Vector as Vector exposing (..)
-import Mle.LinearRegression as LinearRegression exposing (defaultSettings)
+import Mle.LogisticRegression as LogisticRegression exposing (defaultSettings)
 import Mle.Preprocessing exposing (..)
 import Platform exposing (Task)
+import Plot
 import Plot.Extra exposing (..)
 import TaskIO exposing (..)
 
@@ -21,7 +24,7 @@ main =
 
 run : Task String (Html TaskIO.Msg)
 run =
-    returnHttp (Http.getString "http://localhost:8000/examples/linearSample.txt")
+    returnHttp (Http.getString "http://localhost:8000/examples/binarySample.txt")
         |> andThen parseCsv
         |> andThen splitData
         |> andThen trainAndPredict
@@ -32,7 +35,7 @@ parseCsv : String -> TaskIO (Matrix Float)
 parseCsv csv =
     let
         descodeSampleData =
-            Csv.Decode.map (\index x y -> [ index, x, y ])
+            Csv.Decode.map (\tumor_size growth is_cancer -> [ tumor_size, growth, is_cancer ])
                 (Csv.Decode.next String.toFloat
                     |> Csv.Decode.andMap (Csv.Decode.next String.toFloat)
                     |> Csv.Decode.andMap (Csv.Decode.next String.toFloat)
@@ -40,7 +43,6 @@ parseCsv csv =
     in
     Csv.parse csv
         |> Csv.Decode.decodeCsv descodeSampleData
-        |> Result.map (List.take 400)
         |> returnResult
 
 
@@ -48,7 +50,7 @@ splitData : Matrix Float -> TaskIO ( Matrix Float, Vector Float, Matrix Float, V
 splitData data =
     let
         scaledXs =
-            unsafeGetColumns [ 1 ] data
+            unsafeGetColumns [ 0, 1 ] data
                 |> scaleMatrix
 
         ys =
@@ -59,19 +61,46 @@ splitData data =
 
 trainAndPredict : ( Matrix Float, Vector Float, Matrix Float, a ) -> TaskIO ( Matrix Float, Vector Float, Matrix Float, Vector Float )
 trainAndPredict ( trainXs, trainYs, testXs, testYs ) =
-    LinearRegression.init { defaultSettings | learningRate = 1 }
-        |> LinearRegression.train trainXs trainYs
-        |> LinearRegression.predict testXs
+    LogisticRegression.init defaultSettings
+        |> LogisticRegression.train trainXs trainYs
+        |> LogisticRegression.predict testXs
         |> Result.map (\predictions -> ( trainXs, trainYs, testXs, predictions ))
         |> returnResult
 
 
-plotResults : ( Matrix Float, List Float, Matrix Float, List Float ) -> TaskIO (Html msg)
+plotResults : ( Matrix Float, Vector Float, Matrix Float, Vector Float ) -> TaskIO (Html msg)
 plotResults ( trainXs, trainYs, testXs, predictions ) =
+    let
+        xs =
+            trainXs ++ testXs
+
+        ys =
+            trainYs ++ predictions
+    in
     return <|
         div [ style [ ( "width", "800px" ), ( "height", "800px" ) ] ]
             [ plotSeries
-                [ scatter (trainXs |> unsafeGetColumn 0) trainYs
-                , plot (testXs |> unsafeGetColumn 0) predictions
+                [ Plot.dots
+                    (\_ ->
+                        List.map2
+                            (\xs y ->
+                                let
+                                    color =
+                                        if round y == 1 then
+                                            "red"
+                                        else
+                                            "green"
+
+                                    d1 =
+                                        List.Extra.getAt 0 xs |> Helpers.unwrapMaybe "could not get first x"
+
+                                    d2 =
+                                        List.Extra.getAt 1 xs |> Helpers.unwrapMaybe "could not get second x"
+                                in
+                                Plot.dot (Plot.viewCircle 5 color) (d1 + 1) (d2 + 1)
+                            )
+                            xs
+                            ys
+                    )
                 ]
             ]

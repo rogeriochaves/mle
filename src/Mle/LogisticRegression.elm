@@ -1,6 +1,7 @@
-module Mle.LinearRegression exposing (..)
+module Mle.LogisticRegression exposing (..)
 
 import Helpers exposing (..)
+import Math.Constants
 import Math.Matrix as Matrix exposing (..)
 import Math.Vector as Vector exposing (..)
 
@@ -13,6 +14,7 @@ threshold =
 hypotesis : Matrix Float -> Vector Float -> Vector Float
 hypotesis xs parameters =
     multiplyVector xs parameters
+        |> List.map (\z -> 1 / (1 + Math.Constants.e ^ -z))
 
 
 padFeatures : Matrix Float -> Matrix Float
