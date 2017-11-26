@@ -5,14 +5,22 @@ import List.Extra
 import NumElm exposing (..)
 
 
-height : NdArray -> Int
+type alias Matrix =
+    NdArray
+
+
+type alias Vector =
+    NdArray
+
+
+height : Matrix -> Int
 height matrix =
     NumElm.size matrix
         |> List.head
         |> Maybe.withDefault 0
 
 
-width : NdArray -> Int
+width : Matrix -> Int
 width matrix =
     NumElm.size matrix
         |> List.tail
@@ -20,7 +28,7 @@ width matrix =
         |> Maybe.withDefault 0
 
 
-transpose : NdArray -> NdArray
+transpose : Matrix -> Matrix
 transpose matrix =
     NumElm.transpose matrix
         |> toList
@@ -28,17 +36,17 @@ transpose matrix =
         |> unwrap
 
 
-getColumn : Int -> NdArray -> Maybe NdArray
+getColumn : Int -> Matrix -> Maybe Matrix
 getColumn n matrix =
     NumElm.slice [ 0, n ] [ height matrix, n + 1 ] matrix
 
 
-getAt : Int -> Int -> NdArray -> Maybe number
+getAt : Int -> Int -> Matrix -> Maybe number
 getAt i j =
     NumElm.get [ i, j ]
 
 
-getColumns : List Int -> NdArray -> Maybe NdArray
+getColumns : List Int -> Matrix -> Maybe Matrix
 getColumns ns matrix =
     let
         concatColumns columns =
@@ -60,32 +68,32 @@ getColumns ns matrix =
         |> Maybe.andThen concatColumns
 
 
-multiplyVector : NdArray -> NdArray -> Result String NdArray
+multiplyVector : Matrix -> Vector -> Result String Matrix
 multiplyVector =
     multiply
 
 
-multiply : NdArray -> NdArray -> Result String NdArray
+multiply : Matrix -> Matrix -> Result String Matrix
 multiply =
     NumElm.dot
 
 
-prependColumn : NdArray -> NdArray -> Result String NdArray
+prependColumn : Vector -> Matrix -> Result String Matrix
 prependColumn =
     NumElm.concatAxis 1
 
 
-unsafeGetColumn : Int -> NdArray -> NdArray
+unsafeGetColumn : Int -> Matrix -> Matrix
 unsafeGetColumn n =
     getColumn n >> unwrapMaybe ("could not get column " ++ Basics.toString n)
 
 
-unsafeGetColumns : List Int -> NdArray -> NdArray
+unsafeGetColumns : List Int -> Matrix -> Matrix
 unsafeGetColumns ns =
     getColumns ns >> unwrapMaybe ("could not get columns " ++ Basics.toString ns)
 
 
-toList : NdArray -> Result String (List (List Float))
+toList : Matrix -> Result String (List (List Float))
 toList matrix =
     NumElm.dataToString matrix
         |> String.filter ((/=) ']')

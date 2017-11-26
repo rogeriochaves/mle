@@ -2,11 +2,11 @@ module Mle.Internal.Regression exposing (..)
 
 import Helpers exposing (..)
 import Math.Matrix as Matrix exposing (..)
-import Math.Vector as Vector exposing (..)
+import NumElm exposing (..)
 
 
 type alias HypotesisFunction =
-    Matrix Float -> Vector Float -> Vector Float
+    Matrix -> Vector -> Vector
 
 
 threshold : Float
@@ -14,14 +14,14 @@ threshold =
     0.01
 
 
-padFeatures : Matrix Float -> Matrix Float
+padFeatures : Matrix -> Matrix
 padFeatures xs =
-    xs
-        |> prependColumn (List.repeat (Matrix.height xs) 1)
+    NumElm.vector Float64 (List.repeat (Matrix.height xs) 1)
+        |> Result.andThen (flip prependColumn xs)
         |> unwrap
 
 
-descend : HypotesisFunction -> Settings -> Matrix Float -> Vector Float -> Vector Float -> ( Float, Vector Float )
+descend : HypotesisFunction -> Settings -> Matrix -> Vector -> Vector -> ( Float, Vector )
 descend hypotesisFunction settings xs ys parameters =
     let
         xs_ =
@@ -31,33 +31,36 @@ descend hypotesisFunction settings xs ys parameters =
             toFloat (Matrix.height xs_)
 
         cost =
-            Vector.subtract (hypotesisFunction xs_ parameters) ys
+            NumElm.subtract (hypotesisFunction xs_ parameters) ys
+                |> unwrap
 
         totalCost =
-            List.foldl (+) 0 cost
+            NumElm.sum cost
 
         updatedParameters =
             Matrix.multiplyVector (Matrix.transpose xs_) cost
-                |> Vector.scalarMultiply (settings.learningRate / dataSize)
-                |> Vector.subtract parameters
+                |> unwrap
+                |> flip (.*) (settings.learningRate / dataSize)
+                |> NumElm.subtract parameters
+                |> unwrap
     in
     ( totalCost, updatedParameters )
 
 
-gradientDescend : HypotesisFunction -> Settings -> Matrix Float -> Vector Float -> Vector Float -> Int -> Result String (Vector Float)
+gradientDescend : HypotesisFunction -> Settings -> Matrix -> Vector -> Vector -> Int -> Result String Vector
 gradientDescend hypotesisFunction settings xs ys parameters iteration =
     case descend hypotesisFunction settings xs ys parameters of
         ( error, nextParameters ) ->
             if iteration > settings.maxIterations then
-                Err ("Failed to converge at a maximum of " ++ toString settings.maxIterations ++ " iterations, try scaling the params and adjusting the learn rate")
-            else if abs error < threshold then
+                Err ("Failed to converge at a maximum of " ++ Basics.toString settings.maxIterations ++ " iterations, try scaling the params and adjusting the learn rate")
+            else if Basics.abs error < threshold then
                 Ok nextParameters
             else
                 gradientDescend hypotesisFunction settings xs ys nextParameters (iteration + 1)
 
 
 type alias Model =
-    Result String { settings : Settings, params : Vector Float }
+    Result String { settings : Settings, params : Vector }
 
 
 type alias Settings =
@@ -69,17 +72,18 @@ defaultSettings =
     { learningRate = 0.1, maxIterations = 10000 }
 
 
-initialParameters : Matrix a -> List number
+initialParameters : Matrix -> Vector
 initialParameters xs =
-    List.repeat (Matrix.width xs + 1) 0
+    NumElm.zeros Float64 [ Matrix.width xs + 1, 1 ]
+        |> unwrap
 
 
 init : Settings -> Model
 init settings =
-    Ok { params = [], settings = settings }
+    Ok { params = NumElm.zeros Float64 [ 1 ] |> unwrap, settings = settings }
 
 
-train : HypotesisFunction -> Matrix Float -> Vector Float -> Model -> Model
+train : HypotesisFunction -> Matrix -> Vector -> Model -> Model
 train hypotesisFunction xs ys =
     Result.andThen
         (\model ->
@@ -88,6 +92,6 @@ train hypotesisFunction xs ys =
         )
 
 
-predict : HypotesisFunction -> Matrix Float -> Model -> Result String (Vector Float)
+predict : HypotesisFunction -> Matrix -> Model -> Result String Vector
 predict hypotesisFunction xs =
     Result.map (.params >> hypotesisFunction (padFeatures xs))
