@@ -37,6 +37,6 @@ predict =
 
 hypotesis : Matrix -> Vector -> Vector
 hypotesis xs parameters =
-    multiplyVector xs parameters
+    NumElm.dot xs parameters
         |> Result.map (NumElm.map (\z _ _ -> 1 / (1 + Math.Constants.e ^ -z)))
         |> unwrap

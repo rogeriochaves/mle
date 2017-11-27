@@ -51,11 +51,6 @@ getColumn n matrix =
     NumElm.slice [ 0, n ] [ height matrix, n + 1 ] matrix
 
 
-getAt : Int -> Int -> Matrix -> Maybe number
-getAt i j =
-    NumElm.get [ i, j ]
-
-
 getColumns : List Int -> Matrix -> Maybe Matrix
 getColumns ns matrix =
     let
@@ -76,21 +71,6 @@ getColumns ns matrix =
     in
     maybeFlatMap (flip getColumn matrix) ns
         |> Maybe.andThen concatColumns
-
-
-multiplyVector : Matrix -> Vector -> Result String Matrix
-multiplyVector =
-    multiply
-
-
-multiply : Matrix -> Matrix -> Result String Matrix
-multiply =
-    NumElm.dot
-
-
-prependColumn : Vector -> Matrix -> Result String Matrix
-prependColumn =
-    NumElm.concatAxis 1
 
 
 unsafeGetColumn : Int -> Matrix -> Matrix

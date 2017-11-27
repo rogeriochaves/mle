@@ -17,7 +17,7 @@ threshold =
 padFeatures : Matrix -> Matrix
 padFeatures xs =
     NumElm.vector Float64 (List.repeat (Matrix.height xs) 1)
-        |> Result.andThen (flip prependColumn xs)
+        |> Result.andThen (flip (NumElm.concatAxis 1) xs)
         |> unwrap
 
 
@@ -38,7 +38,7 @@ descend hypotesisFunction settings xs ys parameters =
             NumElm.sum cost
 
         updatedParameters =
-            Matrix.multiplyVector (Matrix.transpose xs_) cost
+            NumElm.dot (Matrix.transpose xs_) cost
                 |> unwrap
                 |> flip (.*) (settings.learningRate / dataSize)
                 |> NumElm.subtract parameters

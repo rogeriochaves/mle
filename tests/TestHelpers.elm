@@ -1,9 +1,7 @@
 module TestHelpers exposing (..)
 
 import Fuzz exposing (..)
-import Helpers exposing (unwrap)
 import Math.Matrix exposing (..)
-import NumElm exposing (Dtype(Float64))
 
 
 fuzzMatrix : Int -> Int -> Fuzzer Matrix

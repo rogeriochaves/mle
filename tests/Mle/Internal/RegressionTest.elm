@@ -7,7 +7,6 @@ import Math.Matrix exposing (..)
 import Mle.Internal.Regression exposing (..)
 import NumElm exposing (Dtype(Float64), matrix, vector)
 import Test exposing (..)
-import TestHelpers exposing (..)
 
 
 data : Matrix
@@ -31,7 +30,7 @@ ys =
 
 hypotesis : HypotesisFunction
 hypotesis xs parameters =
-    multiplyVector xs parameters
+    NumElm.dot xs parameters
         |> unwrap
 
 

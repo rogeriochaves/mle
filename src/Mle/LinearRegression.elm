@@ -3,6 +3,7 @@ module Mle.LinearRegression exposing (..)
 import Helpers exposing (unwrap)
 import Math.Matrix as Matrix exposing (..)
 import Mle.Internal.Regression as Internal
+import NumElm
 
 
 type alias Model =
@@ -35,5 +36,5 @@ predict =
 
 hypotesis : Matrix -> Vector -> Vector
 hypotesis xs parameters =
-    multiplyVector xs parameters
+    NumElm.dot xs parameters
         |> unwrap
