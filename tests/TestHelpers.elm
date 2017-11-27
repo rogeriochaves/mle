@@ -28,13 +28,3 @@ fuzzList length =
 sequenceFuzzers : List (Fuzzer a) -> Fuzzer (List a)
 sequenceFuzzers =
     List.foldr (Fuzz.map2 (::)) (Fuzz.constant [])
-
-
-vec : List number -> NumElm.NdArray
-vec =
-    NumElm.vector Float64 >> unwrap
-
-
-mat : List (List number) -> NumElm.NdArray
-mat =
-    NumElm.matrix Float64 >> unwrap

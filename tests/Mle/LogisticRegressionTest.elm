@@ -3,6 +3,7 @@ module Mle.LogisticRegressionTest exposing (..)
 import ElmTestBDDStyle exposing (..)
 import Expect exposing (..)
 import Fuzz
+import Math.Matrix exposing (..)
 import Mle.LogisticRegression exposing (..)
 import NumElm
 import Test exposing (..)

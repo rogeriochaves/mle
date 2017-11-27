@@ -13,6 +13,16 @@ type alias Vector =
     NdArray
 
 
+vec : List number -> NumElm.NdArray
+vec =
+    NumElm.vector Float64 >> unwrap
+
+
+mat : List (List number) -> NumElm.NdArray
+mat =
+    NumElm.matrix Float64 >> unwrap
+
+
 height : Matrix -> Int
 height matrix =
     NumElm.size matrix

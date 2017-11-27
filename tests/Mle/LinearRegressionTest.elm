@@ -2,9 +2,9 @@ module Mle.LinearRegressionTest exposing (..)
 
 import ElmTestBDDStyle exposing (..)
 import Expect exposing (..)
+import Math.Matrix exposing (..)
 import Mle.LinearRegression exposing (..)
 import Test exposing (..)
-import TestHelpers exposing (..)
 
 
 suite : Test
