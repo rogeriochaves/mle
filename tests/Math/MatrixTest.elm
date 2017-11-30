@@ -73,6 +73,20 @@ suite =
             expect (size sample2x3) to equal ( 2, 3 )
         , it "gets a row" <|
             expect (getRow 1 sample2x3) to equal (Just [ 4, 5, 6 ])
+        , it "gets a column" <|
+            expect (getColumn 1 sample2x3)
+                to
+                equal
+                (Just [ 2, 5 ])
+        , it "gets two columns" <|
+            expect (getColumns [ 0, 2 ] sample2x3)
+                to
+                equal
+                (Just
+                    [ [ 1, 3 ]
+                    , [ 4, 6 ]
+                    ]
+                )
         ]
 
 
