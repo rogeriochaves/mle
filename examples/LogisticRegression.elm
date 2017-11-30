@@ -8,9 +8,9 @@ import Html.Attributes exposing (..)
 import Http
 import List.Extra
 import Math.Matrix as Matrix exposing (..)
-import Math.Vector as Vector exposing (..)
 import Mle.LogisticRegression as LogisticRegression exposing (defaultSettings)
 import Mle.Preprocessing exposing (..)
+import NumElm
 import Platform exposing (Task)
 import Plot
 import Plot.Extra exposing (..)
@@ -31,7 +31,7 @@ run =
         |> andThen plotResults
 
 
-parseCsv : String -> TaskIO (Matrix Float)
+parseCsv : String -> TaskIO Matrix
 parseCsv csv =
     let
         petalIndex name =
@@ -50,10 +50,11 @@ parseCsv csv =
     in
     Csv.parse csv
         |> Csv.Decode.decodeCsv descodeSampleData
+        |> Result.map Matrix.mat
         |> returnResult
 
 
-splitData : Matrix Float -> TaskIO ( Matrix Float, Vector Float, Matrix Float, Vector Float )
+splitData : Matrix -> TaskIO ( Matrix, Vector, Matrix, Vector )
 splitData data =
     let
         scaledXs =
@@ -66,7 +67,7 @@ splitData data =
     returnRandom (trainTestSplit scaledXs ys)
 
 
-trainAndPredict : ( Matrix Float, Vector Float, Matrix Float, a ) -> TaskIO ( Matrix Float, Vector Float, Matrix Float, Vector Float )
+trainAndPredict : ( Matrix, Vector, Matrix, a ) -> TaskIO ( Matrix, Vector, Matrix, Vector )
 trainAndPredict ( trainXs, trainYs, testXs, testYs ) =
     LogisticRegression.init defaultSettings
         |> LogisticRegression.train trainXs trainYs
@@ -75,18 +76,23 @@ trainAndPredict ( trainXs, trainYs, testXs, testYs ) =
         |> returnResult
 
 
-plotResults : ( Matrix Float, Vector Float, Matrix Float, Vector Float ) -> TaskIO (Html msg)
+plotResults : ( Matrix, Vector, Matrix, Vector ) -> TaskIO (Html msg)
 plotResults ( trainXs, trainYs, testXs, predictions ) =
     let
         xs =
-            trainXs ++ testXs
+            NumElm.concat trainXs testXs
+                |> Result.andThen Matrix.toList
+                |> Helpers.unwrap
 
         ys =
-            trainYs ++ predictions
+            NumElm.concat trainYs predictions
+                |> Result.andThen Matrix.vectorToList
+                |> Helpers.unwrap
 
         colors =
             [ "red", "green" ]
 
+        dotAt : List Float -> Float -> Plot.DataPoint msg
         dotAt xs y =
             let
                 color =

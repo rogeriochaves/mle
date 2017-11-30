@@ -24,6 +24,11 @@ suite =
                     , [ 3, 4 ]
                     ]
                 )
+        , it "converts a vector to list" <|
+            expect (sample2x2 |> getColumn 0 |> Helpers.unwrapMaybe "should not happen" |> vectorToList)
+                to
+                equal
+                (Ok [ 1, 3 ])
         , it "transposes square matrixes" <|
             expect (transpose sample2x2 |> Ok)
                 to

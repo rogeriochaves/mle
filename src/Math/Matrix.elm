@@ -92,3 +92,11 @@ toList matrix =
         |> List.map String.toFloat
         |> flatResultList
         |> Result.map (List.Extra.groupsOf <| width matrix)
+
+
+vectorToList : Vector -> Result String (List Float)
+vectorToList matrix =
+    matrix
+        |> transpose
+        |> toList
+        |> Result.andThen (List.head >> Result.fromMaybe "could not get first item from matrix")
