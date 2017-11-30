@@ -16,9 +16,12 @@ height matrix =
 
 width : Matrix a -> Int
 width matrix =
-    List.head matrix
-        |> Maybe.withDefault []
-        |> List.length
+    case matrix of
+        [] ->
+            0
+
+        line :: _ ->
+            List.length line
 
 
 size : Matrix a -> ( Int, Int )
@@ -27,8 +30,9 @@ size matrix =
 
 
 transpose : Matrix a -> Matrix a
-transpose =
-    List.Extra.transpose
+transpose matrix =
+    -- TODO: use official List.Extra.transpose after <https://github.com/elm-community/list-extra/pull/83> is merged
+    List.foldr (List.map2 (::)) (List.repeat (width matrix) []) matrix
 
 
 getRow : Int -> Matrix a -> Maybe (Vector a)

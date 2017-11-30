@@ -40,7 +40,6 @@ parseCsv csv =
     in
     Csv.parse csv
         |> Csv.Decode.decodeCsv descodeSampleData
-        |> Result.map (List.take 400)
         |> returnResult
 
 
