@@ -1,109 +1,102 @@
 module Math.Matrix exposing (..)
 
-import Helpers exposing (maybeFlatMap, unwrapMaybe)
+import Helpers exposing (flatResultList, maybeFlatMap, unwrap, unwrapMaybe)
 import List.Extra
-import Math.Vector exposing (..)
+import NumElm exposing (..)
 
 
-type alias Matrix a =
-    List (List a)
+type alias Matrix =
+    NdArray
 
 
-height : Matrix a -> Int
+type alias Vector =
+    NdArray
+
+
+vec : List number -> NumElm.NdArray
+vec =
+    NumElm.vector Float64 >> unwrap
+
+
+mat : List (List number) -> NumElm.NdArray
+mat =
+    NumElm.matrix Float64 >> unwrap
+
+
+height : Matrix -> Int
 height matrix =
-    List.length matrix
+    NumElm.size matrix
+        |> List.head
+        |> Maybe.withDefault 0
 
 
-width : Matrix a -> Int
+width : Matrix -> Int
 width matrix =
-    List.head matrix
-        |> Maybe.withDefault []
-        |> List.length
+    NumElm.size matrix
+        |> List.tail
+        |> Maybe.andThen List.head
+        |> Maybe.withDefault 0
 
 
-size : Matrix a -> ( Int, Int )
-size matrix =
-    ( height matrix, width matrix )
+transpose : Matrix -> Matrix
+transpose matrix =
+    NumElm.transpose matrix
+        |> toList
+        |> Result.andThen (NumElm.matrix Float64)
+        |> unwrap
 
 
-transpose : Matrix a -> Matrix a
-transpose =
-    List.Extra.transpose
+getColumn : Int -> Matrix -> Maybe Matrix
+getColumn n matrix =
+    NumElm.slice [ 0, n ] [ height matrix, n + 1 ] matrix
 
 
-getRow : Int -> Matrix a -> Maybe (Vector a)
-getRow =
-    List.Extra.getAt
-
-
-getColumn : Int -> Matrix a -> Maybe (Vector a)
-getColumn n =
-    List.Extra.getAt n << transpose
-
-
-getAt : Int -> Int -> Matrix a -> Maybe a
-getAt i j matrix =
-    getRow i matrix
-        |> Maybe.andThen (List.Extra.getAt j)
-
-
-getColumns : List Int -> Matrix a -> Maybe (Matrix a)
+getColumns : List Int -> Matrix -> Maybe Matrix
 getColumns ns matrix =
     let
-        transMatrix =
-            transpose matrix
+        concatColumns columns =
+            let
+                tail =
+                    List.tail columns |> Maybe.withDefault []
+            in
+            List.head columns
+                |> Maybe.andThen (tailHeadConcat tail)
+
+        tailHeadConcat tail head =
+            List.foldl
+                (flip (NumElm.concatAxis 1) >> Result.andThen)
+                (Ok head)
+                tail
+                |> Result.toMaybe
     in
-    maybeFlatMap (\n -> List.Extra.getAt n transMatrix) ns
-        |> Maybe.map transpose
+    maybeFlatMap (flip getColumn matrix) ns
+        |> Maybe.andThen concatColumns
 
 
-multiplyVector : Matrix number -> Vector number -> Vector number
-multiplyVector matrix vector =
-    let
-        multiplyRow row result =
-            result ++ [ List.sum (List.map2 (*) vector row) ]
-    in
-    List.foldl multiplyRow [] matrix
-
-
-multiply : Matrix number -> Matrix number -> Result String (Matrix number)
-multiply a b =
-    let
-        bTrans =
-            transpose b
-
-        multiplyRow row result =
-            result ++ [ multiplyVector bTrans row ]
-    in
-    if width a /= height b then
-        Err <|
-            "Matrix sizes are not fit for multiplication: Could not multiply a "
-                ++ toString (size a)
-                ++ " matrix with a "
-                ++ toString (size b)
-                ++ " matrix"
-    else
-        Ok (List.foldl multiplyRow [] a)
-
-
-prependColumn : Vector a -> Matrix a -> Result String (Matrix a)
-prependColumn column matrix =
-    if List.length column /= height matrix then
-        Err <|
-            "Could not prepend a "
-                ++ toString (List.length column)
-                ++ "-sized vector to a "
-                ++ toString (size matrix)
-                ++ " matrix"
-    else
-        Ok <| transpose (column :: transpose matrix)
-
-
-unsafeGetColumn : Int -> Matrix a -> Vector a
+unsafeGetColumn : Int -> Matrix -> Matrix
 unsafeGetColumn n =
-    getColumn n >> unwrapMaybe ("could not get column " ++ toString n)
+    getColumn n >> unwrapMaybe ("could not get column " ++ Basics.toString n)
 
 
-unsafeGetColumns : List Int -> Matrix a -> Matrix a
+unsafeGetColumns : List Int -> Matrix -> Matrix
 unsafeGetColumns ns =
-    getColumns ns >> unwrapMaybe ("could not get columns " ++ toString ns)
+    getColumns ns >> unwrapMaybe ("could not get columns " ++ Basics.toString ns)
+
+
+toList : Matrix -> Result String (List (List Float))
+toList matrix =
+    NumElm.dataToString matrix
+        |> String.filter ((/=) ']')
+        |> String.filter ((/=) '[')
+        |> String.split ","
+        |> List.map String.toFloat
+        |> flatResultList
+        |> Result.map (List.Extra.groupsOf <| width matrix)
+
+
+vectorToList : Vector -> Result String (List Float)
+vectorToList matrix =
+    matrix
+        |> transpose
+        |> toList
+        |> Result.andThen (List.head >> Result.fromMaybe "could not get first item from matrix")

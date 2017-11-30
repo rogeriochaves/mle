@@ -2,11 +2,11 @@ module Examples.LinearRegression exposing (..)
 
 import Csv
 import Csv.Decode
+import Helpers exposing (unwrap)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Http
 import Math.Matrix as Matrix exposing (..)
-import Math.Vector as Vector exposing (..)
 import Mle.LinearRegression as LinearRegression exposing (defaultSettings)
 import Mle.Preprocessing exposing (..)
 import Platform exposing (Task)
@@ -28,7 +28,7 @@ run =
         |> andThen plotResults
 
 
-parseCsv : String -> TaskIO (Matrix Float)
+parseCsv : String -> TaskIO Matrix
 parseCsv csv =
     let
         descodeSampleData =
@@ -40,11 +40,11 @@ parseCsv csv =
     in
     Csv.parse csv
         |> Csv.Decode.decodeCsv descodeSampleData
-        |> Result.map (List.take 400)
+        |> Result.map (List.take 400 >> Matrix.mat)
         |> returnResult
 
 
-splitData : Matrix Float -> TaskIO ( Matrix Float, Vector Float, Matrix Float, Vector Float )
+splitData : Matrix -> TaskIO ( Matrix, Vector, Matrix, Vector )
 splitData data =
     let
         scaledXs =
@@ -57,7 +57,7 @@ splitData data =
     returnRandom (trainTestSplit scaledXs ys)
 
 
-trainAndPredict : ( Matrix Float, Vector Float, Matrix Float, a ) -> TaskIO ( Matrix Float, Vector Float, Matrix Float, Vector Float )
+trainAndPredict : ( Matrix, Vector, Matrix, a ) -> TaskIO ( Matrix, Vector, Matrix, Vector )
 trainAndPredict ( trainXs, trainYs, testXs, testYs ) =
     LinearRegression.init { defaultSettings | learningRate = 1 }
         |> LinearRegression.train trainXs trainYs
@@ -66,12 +66,12 @@ trainAndPredict ( trainXs, trainYs, testXs, testYs ) =
         |> returnResult
 
 
-plotResults : ( Matrix Float, List Float, Matrix Float, List Float ) -> TaskIO (Html msg)
+plotResults : ( Matrix, Vector, Matrix, Vector ) -> TaskIO (Html msg)
 plotResults ( trainXs, trainYs, testXs, predictions ) =
     return <|
         div [ style [ ( "width", "800px" ), ( "height", "800px" ) ] ]
             [ plotSeries
-                [ scatter (trainXs |> unsafeGetColumn 0) trainYs
-                , plot (testXs |> unsafeGetColumn 0) predictions
+                [ scatter (trainXs |> unsafeGetColumn 0 |> Matrix.vectorToList |> unwrap) (Matrix.vectorToList trainYs |> unwrap)
+                , plot (testXs |> unsafeGetColumn 0 |> Matrix.vectorToList |> unwrap) (Matrix.vectorToList predictions |> unwrap)
                 ]
             ]

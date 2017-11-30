@@ -2,17 +2,23 @@ module TestHelpers exposing (..)
 
 import Fuzz exposing (..)
 import Math.Matrix exposing (..)
-import Math.Vector exposing (..)
 
 
-fuzzMatrix : Int -> Int -> Fuzzer (Matrix Float)
+fuzzMatrix : Int -> Int -> Fuzzer Matrix
 fuzzMatrix rows columns =
-    List.repeat rows (fuzzVector columns)
+    List.repeat rows (fuzzList columns)
         |> sequenceFuzzers
+        |> Fuzz.map mat
 
 
-fuzzVector : Int -> Fuzzer (Vector Float)
+fuzzVector : Int -> Fuzzer Vector
 fuzzVector length =
+    fuzzList length
+        |> Fuzz.map vec
+
+
+fuzzList : Int -> Fuzzer (List Float)
+fuzzList length =
     List.repeat length Fuzz.float
         |> sequenceFuzzers
 

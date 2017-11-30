@@ -5,11 +5,13 @@
   "main": "index.js",
   "scripts": {
     "test": "elm-test",
-    "test:watch": "elm-test --watch"
+    "test:watch": "elm-test --watch",
+    "install": "elm-install && cd tests && elm-install"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "elm-github-install": "^1.6.1",
     "elm-test": "^0.18.9"
   }
 }

@@ -1,8 +1,9 @@
 module Mle.LinearRegression exposing (..)
 
+import Helpers exposing (unwrap)
 import Math.Matrix as Matrix exposing (..)
-import Math.Vector as Vector exposing (..)
 import Mle.Internal.Regression as Internal
+import NumElm
 
 
 type alias Model =
@@ -23,16 +24,17 @@ init =
     Internal.init
 
 
-train : Matrix Float -> Vector Float -> Model -> Model
+train : Matrix -> Vector -> Model -> Model
 train =
     Internal.train hypotesis
 
 
-predict : Matrix Float -> Model -> Result String (Vector Float)
+predict : Matrix -> Model -> Result String Vector
 predict =
     Internal.predict hypotesis
 
 
-hypotesis : Matrix Float -> Vector Float -> Vector Float
+hypotesis : Matrix -> Vector -> Vector
 hypotesis xs parameters =
-    multiplyVector xs parameters
+    NumElm.dot xs parameters
+        |> unwrap

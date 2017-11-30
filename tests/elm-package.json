@@ -19,7 +19,14 @@
         "ericgj/elm-csv-decode": "2.0.0 <= v < 3.0.0",
         "lovasoa/elm-csv": "1.1.4 <= v < 2.0.0",
         "rogeriochaves/elm-test-bdd-style": "6.0.3 <= v < 7.0.0",
-        "terezka/elm-plot": "5.1.0 <= v < 6.0.0"
+        "terezka/elm-plot": "5.1.0 <= v < 6.0.0",
+        "jscriptcoder/numelm": "1.0.0 <= v < 2.0.0"
+    },
+    "dependency-sources": {
+        "jscriptcoder/numelm": {
+            "url": "https://github.com/jscriptcoder/numelm",
+            "ref": "master"
+        }
     },
     "elm-version": "0.18.0 <= v < 0.19.0"
 }

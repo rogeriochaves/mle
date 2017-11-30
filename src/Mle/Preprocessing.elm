@@ -1,27 +1,20 @@
 module Mle.Preprocessing exposing (..)
 
+import Helpers exposing (unwrap)
 import Math.Matrix as Matrix exposing (..)
-import Math.Vector as Vector exposing (..)
+import NumElm
 import Random
 import Random.List
 
 
-scaleMatrix : Matrix Float -> Matrix Float
+scaleMatrix : Matrix -> Matrix
 scaleMatrix xs =
-    Matrix.transpose xs
-        |> List.map scaleVector
-        |> Matrix.transpose
-
-
-scaleVector : Vector Float -> Vector Float
-scaleVector xs =
     let
         avg =
-            List.sum xs / toFloat (List.length xs)
+            NumElm.sum xs / toFloat (NumElm.length xs)
 
         standardDeviation =
-            Maybe.withDefault 0 (List.maximum xs)
-                - Maybe.withDefault 0 (List.minimum xs)
+            NumElm.max xs - NumElm.min xs
 
         standardDeviation_ =
             if standardDeviation == 0 then
@@ -29,16 +22,22 @@ scaleVector xs =
             else
                 standardDeviation
     in
-    List.map (\x -> (x - avg) / standardDeviation_) xs
+    NumElm.map (\x _ _ -> (x - avg) / standardDeviation_) xs
 
 
-trainTestSplit : Matrix a -> Vector b -> Random.Generator ( Matrix a, Vector b, Matrix a, Vector b )
+trainTestSplit : Matrix -> Vector -> Random.Generator ( Matrix, Vector, Matrix, Vector )
 trainTestSplit xss ys =
     let
+        xss_ =
+            Matrix.toList xss |> unwrap
+
+        ys_ =
+            Matrix.toList ys |> unwrap
+
         eightyPercent =
-            round (toFloat (List.length ys) * 0.8)
+            round (toFloat (List.length ys_) * 0.8)
     in
-    List.map2 (\xs y -> ( xs, y )) xss ys
+    List.map2 (\xs y -> ( xs, y )) xss_ ys_
         |> Random.List.shuffle
         |> Random.map
             (\xsYs ->
@@ -50,4 +49,8 @@ trainTestSplit xss ys =
                         List.map Tuple.second xsYs
                 in
                 ( List.take eightyPercent xs_, List.take eightyPercent ys_, List.drop eightyPercent xs_, List.drop eightyPercent ys_ )
+            )
+        |> Random.map
+            (\( trainXs, trainYs, testXs, testYs ) ->
+                ( mat trainXs, mat trainYs, mat testXs, mat testYs )
             )

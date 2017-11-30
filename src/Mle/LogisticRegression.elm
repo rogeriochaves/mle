@@ -1,9 +1,10 @@
 module Mle.LogisticRegression exposing (..)
 
+import Helpers exposing (unwrap)
 import Math.Constants
 import Math.Matrix as Matrix exposing (..)
-import Math.Vector as Vector exposing (..)
 import Mle.Internal.Regression as Internal
+import NumElm
 
 
 type alias Model =
@@ -24,17 +25,18 @@ init =
     Internal.init
 
 
-train : Matrix Float -> Vector Float -> Model -> Model
+train : Matrix -> Vector -> Model -> Model
 train =
     Internal.train hypotesis
 
 
-predict : Matrix Float -> Model -> Result String (Vector Float)
+predict : Matrix -> Model -> Result String Vector
 predict =
     Internal.predict hypotesis
 
 
-hypotesis : Matrix Float -> Vector Float -> Vector Float
+hypotesis : Matrix -> Vector -> Vector
 hypotesis xs parameters =
-    multiplyVector xs parameters
-        |> List.map (\z -> 1 / (1 + Math.Constants.e ^ -z))
+    NumElm.dot xs parameters
+        |> Result.map (NumElm.map (\z _ _ -> 1 / (1 + Math.Constants.e ^ -z)))
+        |> unwrap

@@ -2,7 +2,9 @@ module Math.MatrixTest exposing (..)
 
 import ElmTestBDDStyle exposing (..)
 import Expect exposing (..)
+import Helpers exposing (unwrap)
 import Math.Matrix exposing (..)
+import NumElm exposing (Dtype(Float64), NdArray, matrix, vector)
 import Test exposing (..)
 
 
@@ -13,78 +15,74 @@ import Test exposing (..)
 suite : Test
 suite =
     describe "Math.Matrix"
-        [ it "transposes square matrixes" <|
-            expect (transpose sample2x2)
+        [ it "converts a matrix to list" <|
+            expect (sample2x2 |> toList)
                 to
                 equal
-                [ [ 1, 3 ]
-                , [ 2, 4 ]
-                ]
+                (Ok
+                    [ [ 1, 2 ]
+                    , [ 3, 4 ]
+                    ]
+                )
+        , it "converts a vector to list" <|
+            expect (sample2x2 |> getColumn 0 |> Helpers.unwrapMaybe "should not happen" |> vectorToList)
+                to
+                equal
+                (Ok [ 1, 3 ])
+        , it "transposes square matrixes" <|
+            expect (transpose sample2x2 |> Ok)
+                to
+                equal
+                (matrix Float64
+                    [ [ 1, 3 ]
+                    , [ 2, 4 ]
+                    ]
+                )
         , it "transposes non-squared matrixes" <|
-            expect (transpose sample2x3)
+            expect (transpose sample2x3 |> Ok)
                 to
                 equal
-                [ [ 1, 4 ]
-                , [ 2, 5 ]
-                , [ 3, 6 ]
-                ]
-        , it "multiplies matrixes 2x2 and 2x3" <|
-            expect (multiply sample2x2 sample2x3)
-                to
-                equal
-                (Ok
-                    [ [ 9, 12, 15 ]
-                    , [ 19, 26, 33 ]
+                (matrix Float64
+                    [ [ 1, 4 ]
+                    , [ 2, 5 ]
+                    , [ 3, 6 ]
                     ]
                 )
-        , it "multiplies matrixes 2x3 and 3x2" <|
-            expect (multiply sample2x3 (transpose sample2x3))
-                to
-                equal
-                (Ok
-                    [ [ 14, 32 ]
-                    , [ 32, 77 ]
-                    ]
-                )
-        , it "fails to multiply 2x3 and 2x3 matrixes" <|
-            expect (multiply sample2x3 sample2x3)
-                to
-                equal
-                (Err "Matrix sizes are not fit for multiplication: Could not multiply a (2,3) matrix with a (2,3) matrix")
-        , it "prepends a column" <|
-            expect (prependColumn [ 0, 0 ] sample2x3)
-                to
-                equal
-                (Ok
-                    [ [ 0, 1, 2, 3 ]
-                    , [ 0, 4, 5, 6 ]
-                    ]
-                )
-        , it "does prepends a column with different size" <|
-            expect (prependColumn [ 0, 0, 0 ] sample2x3)
-                to
-                equal
-                (Err "Could not prepend a 3-sized vector to a (2,3) matrix")
         , it "returns correct width" <|
             expect (width sample2x3) to equal 3
         , it "returns correct height" <|
             expect (height sample2x3) to equal 2
-        , it "returns correct size" <|
-            expect (size sample2x3) to equal ( 2, 3 )
-        , it "gets a row" <|
-            expect (getRow 1 sample2x3) to equal (Just [ 4, 5, 6 ])
+        , it "get a column" <|
+            expect (getColumn 1 sample2x3)
+                to
+                equal
+                (vector Float64 [ 2, 5 ] |> Result.toMaybe)
+        , it "get two columns" <|
+            expect (getColumns [ 0, 2 ] sample2x3)
+                to
+                equal
+                (matrix Float64
+                    [ [ 1, 3 ]
+                    , [ 4, 6 ]
+                    ]
+                    |> Result.toMaybe
+                )
         ]
 
 
-sample2x2 : Matrix number
+sample2x2 : NdArray
 sample2x2 =
-    [ [ 1, 2 ]
-    , [ 3, 4 ]
-    ]
+    matrix Float64
+        [ [ 1, 2 ]
+        , [ 3, 4 ]
+        ]
+        |> unwrap
 
 
-sample2x3 : Matrix number
+sample2x3 : NdArray
 sample2x3 =
-    [ [ 1, 2, 3 ]
-    , [ 4, 5, 6 ]
-    ]
+    matrix Float64
+        [ [ 1, 2, 3 ]
+        , [ 4, 5, 6 ]
+        ]
+        |> unwrap
