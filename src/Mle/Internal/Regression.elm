@@ -33,7 +33,7 @@ descend hypotesisFunction settings xs ys parameters =
         cost =
             Vector.subtract (hypotesisFunction xs_ parameters) ys
 
-        totalCost =
+        residual =
             List.foldl (+) 0 cost
 
         updatedParameters =
@@ -41,16 +41,16 @@ descend hypotesisFunction settings xs ys parameters =
                 |> Vector.scalarMultiply (settings.learningRate / dataSize)
                 |> Vector.subtract parameters
     in
-    ( totalCost, updatedParameters )
+    ( residual, updatedParameters )
 
 
 gradientDescend : HypotesisFunction -> Settings -> Matrix Float -> Vector Float -> Vector Float -> Int -> Result String (Vector Float)
 gradientDescend hypotesisFunction settings xs ys parameters iteration =
     case descend hypotesisFunction settings xs ys parameters of
-        ( error, nextParameters ) ->
+        ( residual, nextParameters ) ->
             if iteration > settings.maxIterations then
                 Err ("Failed to converge at a maximum of " ++ toString settings.maxIterations ++ " iterations, try scaling the params and adjusting the learn rate")
-            else if abs error < threshold then
+            else if abs residual < threshold then
                 Ok nextParameters
             else
                 gradientDescend hypotesisFunction settings xs ys nextParameters (iteration + 1)
