@@ -11,7 +11,7 @@ type alias HypotesisFunction =
 
 threshold : Float
 threshold =
-    0.01
+    0.1
 
 
 padFeatures : Matrix Float -> Matrix Float
