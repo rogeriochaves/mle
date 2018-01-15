@@ -98,4 +98,13 @@ suite =
                 to
                 equal
                 (Ok [ 7, 8 ])
+        , it "predicts probabilities correctly" <|
+            expect
+                (init defaultSettings
+                    |> train [ [ 0 ], [ 5 ], [ 10 ] ] [ 7, 8, 9 ]
+                    |> predict_probabilities [ [ 1 ], [ 6 ] ]
+                )
+                to
+                equal
+                (Ok [ 0.671798244339312, 0.3551530955072557 ])
         ]
