@@ -48,9 +48,7 @@ gradientDescend : HypotesisFunction -> Settings -> Matrix Float -> Vector Float 
 gradientDescend hypotesisFunction settings xs ys parameters iteration =
     case descend hypotesisFunction settings xs ys parameters of
         ( residual, nextParameters ) ->
-            if iteration > settings.maxIterations then
-                Err ("Failed to converge at a maximum of " ++ toString settings.maxIterations ++ " iterations, try scaling the params and adjusting the learn rate")
-            else if abs residual < threshold then
+            if abs residual < threshold || iteration > settings.maxIterations then
                 Ok nextParameters
             else
                 gradientDescend hypotesisFunction settings xs ys nextParameters (iteration + 1)

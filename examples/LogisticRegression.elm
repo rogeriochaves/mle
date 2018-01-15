@@ -60,7 +60,7 @@ splitData : Matrix Float -> TaskIO ( Matrix Float, Vector Float, Matrix Float, V
 splitData data =
     let
         scaledXs =
-            unsafeGetColumns [ 0, 1 ] data
+            unsafeGetColumns [ 0, 1, 2, 3 ] data
                 |> scaleMatrix
 
         ys =
