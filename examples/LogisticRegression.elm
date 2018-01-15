@@ -24,7 +24,7 @@ main =
 
 run : Task String (Html TaskIO.Msg)
 run =
-    returnHttp (Http.getString "http://localhost:8000/examples/binarySample.txt")
+    returnHttp (Http.getString "http://localhost:8000/examples/irisFlowerDataset.txt")
         |> andThen parseCsv
         |> andThen splitData
         |> andThen trainAndPredict
@@ -35,12 +35,15 @@ parseCsv : String -> TaskIO (Matrix Float)
 parseCsv csv =
     let
         petalIndex name =
-            List.Extra.elemIndex name [ "I. setosa", "I. versicolor" ]
+            List.Extra.elemIndex name [ "I. setosa", "I. versicolor", "I. virginica" ]
                 |> Maybe.map toFloat
                 |> Result.fromMaybe "Unknown species"
 
         descodeSampleData =
-            Csv.Decode.map (\sepal_length sepal_width _ _ species -> [ sepal_length, sepal_width, species ])
+            Csv.Decode.map
+                (\sepal_length sepal_width petal_length petal_width species ->
+                    [ sepal_length, sepal_width, petal_length, petal_width, species ]
+                )
                 (Csv.Decode.next String.toFloat
                     |> Csv.Decode.andMap (Csv.Decode.next String.toFloat)
                     |> Csv.Decode.andMap (Csv.Decode.next String.toFloat)
@@ -61,7 +64,7 @@ splitData data =
                 |> scaleMatrix
 
         ys =
-            unsafeGetColumn 2 data
+            unsafeGetColumn 4 data
     in
     returnRandom (trainTestSplit scaledXs ys)
 
@@ -85,7 +88,7 @@ plotResults ( trainXs, trainYs, testXs, predictions ) =
             trainYs ++ predictions
 
         colors =
-            [ "red", "green" ]
+            [ "red", "green", "blue" ]
 
         dotAt xs y =
             let
