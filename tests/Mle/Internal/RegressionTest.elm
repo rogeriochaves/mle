@@ -33,7 +33,7 @@ hypotesis xs parameters =
 
 suite : Test
 suite =
-    describe "LinearRegression"
+    describe "Regression"
         [ it "calculates the hypotesis for all parameters" <|
             expect (hypotesis xs [ 5 ]) to equal [ 5, 10, 15 ]
         , describe "gradient descend"
@@ -44,12 +44,19 @@ suite =
             , it "keeps same when already converged" <|
                 expect (gradientDescend hypotesis defaultSettings xs ys [ 1, 2 ] 0) to equal (Ok [ 1, 2 ])
             ]
-        , describe "linear regression"
+        , describe "regression"
             [ it "trains algorithm" <|
                 expect (init defaultSettings |> train hypotesis xs ys |> Result.map (.params >> List.map round)) to equal (Ok [ 1, 2 ])
             , it "predicts future values" <|
                 expect (init defaultSettings |> train hypotesis xs ys |> predict hypotesis [ [ 4.0 ] ] |> Result.map (List.map round)) to equal (Ok [ 9 ])
-            , it "limits attempts to converge" <|
-                expect (init { defaultSettings | maxIterations = 2 } |> train hypotesis xs ys) to equal (Err "Failed to converge at a maximum of 2 iterations, try scaling the params and adjusting the learn rate")
+            , it "exits as is when it reaches the max number of interactions before converging" <|
+                expect (init { defaultSettings | maxIterations = 2 } |> train hypotesis xs ys)
+                    to
+                    equal
+                    (Ok
+                        { params = [ 0.8686703703703704, 1.96179012345679 ]
+                        , settings = { learningRate = 0.1, maxIterations = 2 }
+                        }
+                    )
             ]
         ]
