@@ -9,6 +9,11 @@ type alias Matrix a =
     List (List a)
 
 
+map : (a -> b) -> Matrix a -> Matrix b
+map =
+    List.map << List.map
+
+
 height : Matrix a -> Int
 height matrix =
     List.length matrix

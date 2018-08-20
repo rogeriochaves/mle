@@ -83,7 +83,12 @@ predictOneClass settings xs { class, params } =
 hypotesis : Matrix Float -> Vector Float -> Vector Float
 hypotesis xs parameters =
     multiplyVector xs parameters
-        |> List.map (\z -> 1 / (1 + Math.Constants.e ^ -z))
+        |> List.map sigmoid
+
+
+sigmoid : Float -> Float
+sigmoid z =
+    1 / (1 + Math.Constants.e ^ -z)
 
 
 oneVsAllLabels : Vector Float -> List { class : Float, ys : Vector Float }
